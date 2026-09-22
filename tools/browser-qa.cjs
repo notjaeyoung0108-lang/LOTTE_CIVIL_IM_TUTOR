@@ -1,0 +1,65 @@
+/* Optional QA only. PLAYWRIGHT_PATH can point to an installation outside this repo. */
+const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
+const assert=require('node:assert/strict');
+const path=require('node:path'),fs=require('node:fs'),http=require('node:http');
+const {pathToFileURL}=require('node:url');
+const ROOT=path.resolve(__dirname,'..'), URL=pathToFileURL(path.join(ROOT,'index.html')).href, KEY='lotte_civil_im_tutor.v1';
+const results=[];
+function pass(name){results.push(name);console.log('PASS',name);}
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+ const ctx=await browser.newContext({viewport:{width:1280,height:1000}});const page=await ctx.newPage();const errors=[];
+ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ const state=()=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)),KEY);
+ const nav=async hash=>{await page.evaluate(h=>location.hash=h,hash);await page.waitForTimeout(45);};
+ const flip=()=>page.locator('[data-action="flip"]').click();
+ await page.clock.install({time:new Date('2026-09-22T12:00:00Z')});
+ await page.goto(URL);await page.locator('.chapter').first().waitFor();
+ assert.equal(await page.locator('.chapter').count(),10);assert.equal(await page.locator('#tabs a').count(),5);
+ await page.screenshot({path:path.join(ROOT,'docs/qa/desktop-book.png'),fullPage:true});pass('file:// direct load; 5 tabs; 10 chapters');
+ for(const tab of ['book','s1','s2','s3','home']){await page.locator(`#tabs a[data-tab="${tab}"]`).click();assert.equal(await page.locator('#tabs a[aria-current="page"]').getAttribute('data-tab'),tab);}
+ pass('all bottom routes and active indicators');
+ await nav('#s1');const firstId=await page.locator('.card-id span').first().textContent();assert(firstId.includes('S1-001'));
+ await page.locator('main').focus();await page.keyboard.press('Space');assert.equal(await page.locator('.grades').count(),1);await page.keyboard.press('1');
+ let s=await state();assert.equal(s.cards['s1-001'].due-s.cards['s1-001'].last,60000);
+ await page.locator('main').focus();await page.keyboard.press('Space');await page.keyboard.press('2');
+ s=await state();assert.equal(s.cards['s1-002'].due-s.cards['s1-002'].last,1200000);
+ await page.locator('main').focus();await page.keyboard.press('Space');await page.keyboard.press('3');
+ s=await state();assert.equal(s.cards['s1-003'].due-s.cards['s1-003'].last,86400000);assert.equal(s.log.length,3);
+ pass('keyboard flip and all three exact intervals (1m/20m/24h)');
+ await page.clock.fastForward(61000);assert.equal(await page.evaluate(()=>LotteTutor.pick(1).id),'s1-001');await page.reload();assert((await page.locator('.card-id').textContent()).includes('S1-001'));assert.equal((await state()).log.length,3);
+ await page.clock.fastForward(1200000);assert.equal(await page.evaluate(()=>LotteTutor.pick(1).id),'s1-001');pass('due cards before new; oldest due first; reload persistence');
+ await nav('#s2');assert.equal(await page.locator('.flash-front').count(),1);await flip();assert((await page.locator('.prose').textContent()).includes('관리 연결'));await flip();assert.equal(await page.locator('.flash-front').count(),1);pass('domain cards and reversible front/back');
+ await nav('#s3/case-001');await page.locator('[data-action="write"]').click();const draft='저라면 안전과 CP를 확인합니다. <script>window.attacked=true</script> & "비용"';await page.locator('textarea').fill(draft);await page.keyboard.press('Space');await page.keyboard.type('123');
+ s=await state();assert(s.cases['case-001'].answer.includes('123'));assert.equal(s.log.length,3);assert.equal(await page.evaluate(()=>window.attacked),undefined);
+ for(let i=1;i<=3;i++){await page.locator('[data-action="hint"]').click();assert.equal(await page.locator('.hint').count(),i);}assert(await page.locator('[data-action="hint"]').isDisabled());
+ await flip();assert.equal(await page.locator('.steps li').count(),7);assert.equal(await page.locator('tbody tr').count(),6);await page.locator('[data-rubric="0"]').check();await page.reload();assert.equal(await page.locator('.hint').count(),3);assert((await page.locator('textarea').inputValue()).includes('123'));await flip();assert(await page.locator('[data-rubric="0"]').isChecked());
+ assert.equal(await page.evaluate(()=>LotteTutor.evaluateCaseAnswer('case-001','test').score),null);await page.locator('[data-grade="2"]').click();s=await state();assert(s.cases['case-001'].completed);assert.equal(s.cards['case-001'].due-s.cards['case-001'].last,1200000);pass('Case autosave, input-safe shortcuts, escaped text, progressive hints, 7 steps, 6 options, persisted rubric, self-review completion');
+ await page.locator('[data-filter="difficulty"][data-value="기본"]').click();await page.locator('[data-filter="field"][data-value="토공"]').click();assert.equal(await page.locator('.case-item').count(),1);await page.locator('[data-filter="difficulty"][data-value="고급"]').click();assert.equal(await page.locator('.case-item').count(),0);assert.equal(await page.locator('.empty').count(),1);await page.reload();assert.equal((await state()).filters.field,'토공');assert.equal((await state()).filters.difficulty,'고급');await page.locator('[data-action="clear-filters"]').click();pass('difficulty/field filters, zero-match state, persisted selections, filter reset');
+ for(const category of ['공사','공무','공정','원가','품질·안전','현장리스크','전체']){await page.locator(`[data-filter="category"][data-value="${category}"]`).click();assert.equal(await page.locator(`[data-filter="category"][data-value="${category}"]`).getAttribute('aria-pressed'),'true');}
+ pass('all category chips');
+ const ids=await page.evaluate(()=>window.CASES.map(c=>c.id));
+ for(const id of ids){await nav('#s3/'+id);assert.equal(await page.locator('textarea').count(),1);const issues=await page.locator('.issues li').count();assert(issues>=4&&issues<=7);await flip();assert.equal(await page.locator('.steps li').count(),7);assert.equal(await page.locator('.check').count(),8);assert((await page.locator('.interview').first().textContent()).length>=800);assert((await page.locator('tbody tr').count())>=2);}
+ pass(`${ids.length} Cases directly accessible; front/back, seven steps, tables, spoken answer, eight rubric items`);
+ for(let id=1;id<=10;id++){await nav('#book/'+id);assert.equal(await page.locator('.prose h1').count(),1);assert((await page.locator('.prose').textContent()).length>1000);}
+ await page.locator('[data-action="read"]').click();assert((await state()).book.read.includes(10));await page.reload();assert((await page.locator('[data-action="read"]').textContent()).includes('읽은'));await page.locator('.related a').first().click();assert((await page.locator('.flash-front').count())+(await page.locator('textarea').count())>0);pass('10 Markdown readers, read persistence and cross-links');
+ await nav('#home');assert.equal(await page.locator('.stat').count(),4);assert.equal(await page.locator('progress').count(),3);await page.locator('[data-action="reset-ask"]').click();await page.locator('[data-action="reset-cancel"]').click();assert.equal((await state()).log.length,4);
+ const downloadPromise=page.waitForEvent('download');await page.locator('[data-action="export"]').click();const download=await downloadPromise;assert(download.suggestedFilename().endsWith('.json'));pass('dashboard, progress, recent history, JSON backup, reset cancellation');
+ await page.setViewportSize({width:390,height:844});await nav('#book');await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-book.png'),fullPage:true});
+ await nav('#s1/s1-001');await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-basic.png'),fullPage:true});
+ await nav('#s3/case-001');await page.locator('textarea').fill('저라면 우선 지하수 유입 위치와 유입량, 지반조건을 확인하고 위험 구간을 통제하겠습니다. 그다음 Critical Path와 여유시간을 분석해 공법 변경, 선택적 인력투입, 작업순서 조정의 공기·비용·민원 영향을 비교하겠습니다.');await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-case.png'),fullPage:true});await flip();await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-answer.png'),fullPage:true});
+ for(const width of [320,375,390,768,1280]){await page.setViewportSize({width,height:900});for(const hash of ['#book','#book/10','#s1','#s2','#s3/case-001','#home']){await nav(hash);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`overflow ${width} ${hash}`);if(hash.includes('case-001')){await flip();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`answer overflow ${width}`);}}}
+ pass('no document horizontal overflow at 320/375/390/768/1280px; comparison tables scroll locally');
+ await nav('#home');await page.locator('[data-action="reset-ask"]').click();await page.locator('[data-action="reset-confirm"]').click();s=await state();assert.equal(s.log.length,0);assert.equal(Object.keys(s.cards).length,0);assert.equal(Object.keys(s.cases).length,0);assert.equal(s.book.read.length,0);assert.equal(s.filters.field,'전체');await page.reload();assert.equal((await state()).log.length,0);pass('full confirmed reset and persistence');
+ // Waiting state and automatic return after one minute, with only one matching card unseen.
+ await page.evaluate(k=>{const s={version:1,cards:{},cases:{},filters:{category:'전체',difficulty:'전체',field:'전체'},log:[],book:{last:0,read:[]}};for(const c of STAGE1)s.cards[c.id]={reps:1,last:Date.now(),due:Date.now()+86400000,grade:3,misses:0};s.cards[STAGE1[0].id].due=Date.now()+60000;localStorage.setItem(k,JSON.stringify(s));},KEY);
+ await nav('#s1');await page.reload();assert.equal(await page.locator('#waitline').count(),1);await page.clock.fastForward(61000);assert((await page.locator('.card-id').textContent()).includes('S1-001'));pass('all-seen waiting countdown and automatic due-card resumption');
+ const emptyCtx=await browser.newContext();const empty=await emptyCtx.newPage();empty.on('pageerror',e=>errors.push('empty:'+e.message));await empty.addInitScript(()=>{for(const name of ['STAGE1','STAGE2','CASES','BOOK'])Object.defineProperty(window,name,{get:()=>[],set:()=>{},configurable:true});});await empty.goto(URL+'#s1');assert.equal(await empty.locator('.empty').count(),1);await empty.evaluate(()=>location.hash='#s3');await empty.waitForTimeout(40);assert.equal(await empty.locator('.case-item').count(),0);await empty.evaluate(()=>location.hash='#home');await empty.waitForTimeout(40);assert.equal(await empty.locator('.stat strong').first().textContent(),'0');pass('fully empty datasets without JavaScript exceptions');
+ const broken=await ctx.newPage();broken.on('pageerror',e=>errors.push(e.message));await broken.goto(URL);await broken.evaluate(k=>localStorage.setItem(k,'{broken'),KEY);await broken.reload();assert(await broken.locator('#storage-warning').isVisible());await broken.evaluate(k=>localStorage.removeItem(k),KEY);await broken.reload();await broken.close();
+ const deniedCtx=await browser.newContext();const denied=await deniedCtx.newPage();denied.on('pageerror',e=>errors.push(e.message));await denied.addInitScript(()=>{Storage.prototype.setItem=function(){throw new DOMException('quota','QuotaExceededError');};});await denied.goto(URL+'#s3/case-001');await denied.locator('textarea').fill('보존할 답변');assert(await denied.locator('#storage-warning').isVisible());assert.equal(await denied.locator('textarea').inputValue(),'보존할 답변');pass('corrupt storage and storage-write failure handled visibly');
+ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(req.url.split('?')[0]).replace(/^\/project\//,'');const file=path.resolve(ROOT,pathname||'index.html');if(!file.startsWith(ROOT+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(e,data)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(data);});});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;const hosted=await ctx.newPage();hosted.on('pageerror',e=>errors.push(e.message));await hosted.goto(`http://127.0.0.1:${port}/project/index.html#s3/case-032`);assert.equal(await hosted.locator('textarea').count(),1);await hosted.locator('[data-action="flip"]').click();assert.equal(await hosted.locator('.steps li').count(),7);await hosted.locator('#tabs a[data-tab="book"]').click();assert.equal(await hosted.locator('.chapter').count(),10);await hosted.close();await new Promise(resolve=>server.close(resolve));pass('HTTP project-subpath hosting (GitHub Pages path model), no runtime CDN/fetch dependency');
+ assert.deepEqual(errors,[]);pass('zero JavaScript/console errors in normal scenario coverage');
+ fs.writeFileSync(path.join(ROOT,'docs/qa/results.json'),JSON.stringify({date:'2026-09-22',browser:await browser.version(),tests:results,errors},null,2)+'\n');
+ await browser.close();console.log(`ALL ${results.length} GROUPS PASSED`);
+})().catch(e=>{console.error(e);process.exit(1);});

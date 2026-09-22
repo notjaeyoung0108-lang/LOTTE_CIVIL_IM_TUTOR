@@ -1,0 +1,25 @@
+{
+  "date": "2026-09-22",
+  "browser": "150.0.7871.125",
+  "tests": [
+    "file:// direct load; 5 tabs; 10 chapters",
+    "all bottom routes and active indicators",
+    "keyboard flip and all three exact intervals (1m/20m/24h)",
+    "due cards before new; oldest due first; reload persistence",
+    "domain cards and reversible front/back",
+    "Case autosave, input-safe shortcuts, escaped text, progressive hints, 7 steps, 6 options, persisted rubric, self-review completion",
+    "difficulty/field filters, zero-match state, persisted selections, filter reset",
+    "all category chips",
+    "32 Cases directly accessible; front/back, seven steps, tables, spoken answer, eight rubric items",
+    "10 Markdown readers, read persistence and cross-links",
+    "dashboard, progress, recent history, JSON backup, reset cancellation",
+    "no document horizontal overflow at 320/375/390/768/1280px; comparison tables scroll locally",
+    "full confirmed reset and persistence",
+    "all-seen waiting countdown and automatic due-card resumption",
+    "fully empty datasets without JavaScript exceptions",
+    "corrupt storage and storage-write failure handled visibly",
+    "HTTP project-subpath hosting (GitHub Pages path model), no runtime CDN/fetch dependency",
+    "zero JavaScript/console errors in normal scenario coverage"
+  ],
+  "errors": []
+}
