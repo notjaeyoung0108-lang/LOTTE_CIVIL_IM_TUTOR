@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-24T07:35:11.636Z",
+  "browser": "150.0.7871.125",
+  "checks": [
+    "10 chapters at 320/390/1280px: protagonist, decision questions, diagrams, no page overflow",
+    "wide diagram scrolls inside its own container on mobile",
+    "fenced HTML escaped; literal Markdown preserved; paragraph-to-fence boundary works",
+    "basic card answer and seven-step Case still render"
+  ],
+  "errors": []
+}
