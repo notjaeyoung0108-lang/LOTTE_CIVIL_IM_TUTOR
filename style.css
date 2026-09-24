@@ -1082,3 +1082,21 @@ details>summary {
 .book-parts,.reference-links{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
 .book-parts .button{flex:1;text-align:center;min-width:130px}
 .reference-links a{font-size:14px}
+
+/* Optional illustrations preserve the text-only card layout. */
+.flash-image {
+  margin:16px 0;
+  width:100%;
+}
+.flash-image img {
+  display:block;
+  width:100%;
+  max-width:720px;
+  height:auto;
+  margin:0 auto;
+  border:1px solid var(--line, #ddd);
+  border-radius:12px;
+  background:#fff;
+}
+.flash-image img[hidden] { display:none; }
+.flash-image figcaption { color:var(--dim); font-size:13px; }

@@ -120,8 +120,11 @@
   function gradeButtons() { return `<div class="grades" aria-label="학습 난이도 자기평가">${ratings.map((label, i) => `<button class="grade" data-grade="${i+1}"><strong>${label}</strong><small>${['1분','20분','1일'][i]} 뒤 복습</small></button>`).join('')}</div><p class="shortcut"><kbd>Space</kbd> 앞·뒤 전환 &nbsp; <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> 자기평가 · 입력 중에는 단축키가 꺼집니다.</p>`; }
   function related(c) { const b = BOOK.find(b => b.id===c.chapter); return b ? `<div class="related"><small>같은 판단을 PART B 학습에서 다시 살펴보세요.</small><br><a href="#book/${b.id}/study">CASE ${String(b.id).padStart(2,'0')} ${esc(b.title)} ↗</a></div>` : ''; }
   function metadata(c) { return `<div class="meta"><span class="tag level">${c.s===3?c.difficulty:`${c.s}단계`}</span><span>${esc(c.domain)}</span><span>·</span><span>${(state.cards[c.id]?.reps || 0)+1}회째</span>${(c.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`; }
+  function flashImage(c) {
+    return c.image ? `<figure class="flash-image"><img src="${esc(c.image)}" alt="${esc(c.imageAlt || c.g || c.q)}" decoding="async"><figcaption hidden role="status">이미지를 불러오지 못했습니다. 질문과 답변으로 학습을 계속할 수 있습니다.</figcaption></figure>` : '';
+  }
   function flash(c, back) {
-    return `<article class="panel">${metadata(c)}${back ? `<h2>${esc(c.q)}</h2><div class="prose">${markdown(c.a)}</div>${related(c)}` : `<div class="flash-front"><h2>${esc(c.q)}</h2><p>${c.s===1?'정의 → 역할 → 현장 활용':'현상 → 원인 → 영향 → 관리방법'} 순서로 설명해보세요.</p></div>`}<div class="card-id"><span>${c.id.toUpperCase()} · ${esc(c.g)}</span><span>${back?'ANSWER':'QUESTION'}</span></div></article>${back?`<button class="button subtle full" data-action="flip">← 질문 다시 보기</button>${gradeButtons()}`:`<button class="button primary full" data-action="flip">정답 보기 <span aria-hidden="true">↗</span></button><p class="shortcut"><kbd>Space</kbd> 정답 보기</p>`}`;
+    return `<article class="panel">${metadata(c)}${back ? `<h2>${esc(c.q)}</h2>${flashImage(c)}<div class="prose">${markdown(c.a)}</div>${related(c)}` : `<div class="flash-front"><h2>${esc(c.q)}</h2>${flashImage(c)}<p>${c.s===1||c.answerFormat==='concept'?'정의 → 역할 → 현장 활용':'현상 → 원인 → 영향 → 관리방법'} 순서로 설명해보세요.</p></div>`}<div class="card-id"><span>${c.id.toUpperCase()} · ${esc(c.g)}</span><span>${back?'ANSWER':'QUESTION'}</span></div></article>${back?`<button class="button subtle full" data-action="flip">← 질문 다시 보기</button>${gradeButtons()}`:`<button class="button primary full" data-action="flip">정답 보기 <span aria-hidden="true">↗</span></button><p class="shortcut"><kbd>Space</kbd> 정답 보기</p>`}`;
   }
   function comparison(c) { return `<p class="note">공기·비용은 제시 조건에 따른 비교입니다. 표를 좌우로 밀어 모든 항목을 확인하세요.</p><div class="table-scroll" tabindex="0" role="region" aria-label="대안 비교표, 가로로 스크롤"><table><thead><tr>${['대안','공기효과','추가비용','안전','품질','환경·민원','승인'].map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${c.comparison.map(o=>`<tr>${['name','time','cost','safety','quality','civil','approval'].map((k,i)=>i?`<td>${esc(o[k])}</td>`:`<th scope="row">${esc(o[k])}</th>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
   function caseFront(c) {
@@ -235,6 +238,12 @@
     if(!stage||!sessions[stage].id||!sessions[stage].back)return;
     grade(sessions[stage].id,value);sessions[stage]={id:null,back:false};clearRouteArg();renderStudy();window.scrollTo(0,0);toast(`${ratings[value-1]} · ${['1분','20분','1일'][value-1]} 뒤 복습`);
   }
+  // Image errors do not bubble; capture also handles cards inserted after navigation.
+  $('main').addEventListener('error',e=>{
+    if (!e.target.matches?.('.flash-image img')) return;
+    e.target.hidden=true;
+    e.target.nextElementSibling.hidden=false;
+  },true);
   $('main').addEventListener('click',e=>{
     const button=e.target.closest('button');if(!button||button.disabled)return;
     if(button.dataset.filter){const name=button.dataset.filter;state.filters[name]=button.dataset.value;save();[1,2,3].forEach(s=>{sessions[s]={id:null,back:false};});clearRouteArg();renderStudy();return;}

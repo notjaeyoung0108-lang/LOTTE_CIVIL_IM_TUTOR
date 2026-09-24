@@ -83,3 +83,7 @@ PLAYWRIGHT_PATH=/path/to/playwright node tools/simulation-qa.cjs
 ```
 
 Chrome 경로가 기본 macOS 설치 위치와 다르면 CHROME_PATH로 지정한다. [QA 기록](docs/QA.md)은 웹 기능·콘텐츠 구조 검증과 기술 감수의 범위를 구별한다. 원문 변경 후 data/book.js도 함께 생성해야 배포된 화면이 갱신된다.
+
+### 이미지 플래시카드
+
+질문·답변 카드에 선택적으로 PNG 개념도를 연결할 수 있다. [작성·운영 가이드](docs/IMAGE_CARD_GUIDE.md)에 스키마, 이미지 저장 규칙, 샘플 ID와 검증 방법을 정리했다. 여굴·시추공·저면 위치도 이미지 3장과 신규 개념 카드 5개를 포함하며, 기존 공사일보 카드는 ID를 유지해 보완했다.

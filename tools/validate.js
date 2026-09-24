@@ -9,7 +9,22 @@ assert.equal(new Set(all.map(c=>c.id)).size,all.length,'Duplicate IDs');
 assert.equal(new Set([...STAGE1,...STAGE2].map(c=>c.q)).size,STAGE1.length+STAGE2.length,'Duplicate questions');
 const cats=['공사','공무','공정','원가','품질·안전','현장리스크'], fields=['토공','지반','구조','도로','교량','터널','도심지','종합'];
 for(const c of all){assert(c.id&&c.domain&&cats.includes(c.category),c.id);assert(BOOK.some(b=>b.id===c.chapter),`${c.id} chapter missing`);}
-for(const [s,cards] of [[1,STAGE1],[2,STAGE2]])for(const c of cards){assert.equal(c.s,s);assert(c.q&&c.g&&c.a.length>120,c.id);for(const key of s===1?['정의','왜 필요한가','누가 사용하는가','연결 자료','현장 활용']:['현상','원인','현장 영향','관리방법','관리 연결'])assert(c.a.includes(key),`${c.id}: ${key}`);}
+for(const [s,cards] of [[1,STAGE1],[2,STAGE2]])for(const c of cards){assert.equal(c.s,s);assert(c.q&&c.g&&c.a.length>120,c.id);for(const key of s===1||c.answerFormat==='concept'?['정의','왜 필요한가','누가 사용하는가','연결 자료','현장 활용']:['현상','원인','현장 영향','관리방법','관리 연결'])assert(c.a.includes(key),`${c.id}: ${key}`);}
+// Optional concept/image fields are backward compatible with legacy cards.
+for(const c of [...STAGE1,...STAGE2]) {
+ if(c.answerFormat!==undefined)assert.equal(c.answerFormat,'concept',`${c.id} answerFormat`);
+ if(c.status!==undefined)assert(['draft','review','final'].includes(c.status),`${c.id} status`);
+ if(c.tags!==undefined)assert(Array.isArray(c.tags)&&c.tags.every(t=>typeof t==='string'&&t.trim()),`${c.id} tags`);
+ if(c.answerFormat==='concept')assert(c.status&&c.tags?.length,`${c.id} concept metadata`);
+ if(c.image!==undefined) {
+  assert(typeof c.image==='string'&&/^assets\/flashcards\/[a-z]+\/[a-z0-9-]+\.png$/.test(c.image),`${c.id} image path`);
+  assert.equal(path.basename(c.image),c.id+'.png',`${c.id} image filename`);
+  assert(typeof c.imageAlt==='string'&&c.imageAlt.trim(),`${c.id} imageAlt`);
+  assert(c.status,`${c.id} image status`);
+  const file=path.join(root,c.image);assert(fs.existsSync(file),`${c.id} missing image`);
+  assert.equal(fs.readFileSync(file).subarray(0,8).toString('hex'),'89504e470d0a1a0a',`${c.id} invalid PNG`);
+ }
+}
 for(const c of CASES){
  assert.equal(c.s,3);assert(['기본','중급','고급'].includes(c.difficulty));assert(fields.includes(c.field));assert(c.background&&c.question);
  assert(c.issues.length>=4&&c.issues.length<=7,`${c.id} issues`);assert(c.hints.length>=3);assert(c.framework.length===7);
