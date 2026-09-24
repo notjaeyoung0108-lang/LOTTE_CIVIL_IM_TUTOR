@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-24",
+  "scope": "Education supplement rendering only; not a rerun of the full application QA or engineering certification",
+  "browser": "150.0.7871.125",
+  "checks": [
+    "All 10 expanded chapters: content, tables, single title, read control, no page overflow at 320px",
+    "All 10 expanded chapters: content, tables, single title, read control, no page overflow at 390px",
+    "All 10 expanded chapters: content, tables, single title, read control, no page overflow at 1280px",
+    "All 10 read markers persist after reload in isolated browser context"
+  ],
+  "errors": []
+}

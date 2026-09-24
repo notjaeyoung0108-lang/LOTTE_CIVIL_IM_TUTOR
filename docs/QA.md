@@ -2,6 +2,15 @@
 
 검증일: 2026-09-22
 
+## 2026-09-24 교육자료 보강 확인
+
+- 교재 10장에 실무 절차·계산 예제·과제·해설을 추가하고 `data/book.js`를 다시 생성했습니다.
+- `node tools/validate.js`, `node --check data/book.js`, `git diff --check`가 통과했습니다.
+- 별도 Chrome 컨텍스트에서 10개 장의 보강 본문·표·제목·읽음 동작과 320/390/1280px 문서 가로 넘침을 확인했습니다. 읽음 표시 10건은 새로고침 후 유지됐고 JavaScript·콘솔 오류는 없었습니다.
+- 모바일 토공 표와 데스크톱 교육과정 화면을 확인했습니다. 넓은 표는 기존 방식대로 표 내부에서 가로 스크롤합니다.
+- 결과는 [education-results.json](qa/education-results.json), 화면은 [모바일](qa/education-mobile-earthwork.png)·[데스크톱](qa/education-desktop-curriculum.png)에 별도로 보관했습니다.
+- 이번 검증은 교재 보강과 표시 범위입니다. 아래의 기존 전체 앱 QA를 다시 수행했다는 의미가 아니며, 교육 내용의 현장 적합성·전문가 감수를 인증하지 않습니다.
+
 ## 실행 환경
 
 - macOS의 설치된 Google Chrome을 Playwright로 headless 실행
