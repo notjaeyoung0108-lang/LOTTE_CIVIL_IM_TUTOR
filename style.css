@@ -550,6 +550,19 @@ kbd {
   padding:2px 5px;
   border-radius:4px;
 }
+.prose pre {
+  max-width:100%;
+  overflow-x:auto;
+  white-space:pre;
+  padding:16px;
+  background:var(--bg);
+  border-radius:4px;
+  line-height:1.7;
+}
+.prose pre code {
+  padding:0;
+  border-radius:0;
+}
 .prose a {
   text-decoration:underline;
   color:var(--green);

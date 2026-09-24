@@ -23,6 +23,12 @@
     while (i < lines.length) {
       const line = lines[i];
       if (!line.trim()) { i++; continue; }
+      if (/^```/.test(line)) {
+        const code = []; i++;
+        while (i < lines.length && !/^```\s*$/.test(lines[i])) code.push(lines[i++]);
+        if (i < lines.length) i++;
+        out.push(`<pre tabindex="0" aria-label="현장 도식, 가로로 스크롤"><code>${esc(code.join('\n'))}</code></pre>`); continue;
+      }
       const heading = /^(#{1,4})\s+(.+)/.exec(line);
       if (heading) { const n = heading[1].length; out.push(`<h${n}>${inline(heading[2])}</h${n}>`); i++; continue; }
       if (/^>/.test(line)) { out.push(`<blockquote>${inline(line.replace(/^>\s?/, ''))}</blockquote>`); i++; continue; }
@@ -43,7 +49,7 @@
         out.push(`<div class="table-scroll" tabindex="0" role="region" aria-label="교재 표, 가로로 스크롤"><table><thead><tr>${head.map(x => `<th scope="col">${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue;
       }
       const p = [line]; i++;
-      while (i < lines.length && lines[i].trim() && !/^(#|>|[-*] |\d+\. |\|)/.test(lines[i])) p.push(lines[i++]);
+      while (i < lines.length && lines[i].trim() && !/^(#|>|[-*] |\d+\. |\||```)/.test(lines[i])) p.push(lines[i++]);
       out.push(`<p>${inline(p.join(' '))}</p>`);
     }
     return out.join('');
@@ -158,7 +164,7 @@
   function blueprint() { return `<div class="blueprint" aria-hidden="true"><span>FIELD NOTE / SECTION 01</span><svg viewBox="0 0 320 190" fill="none"><path d="M22 140H298M35 146V154M285 146V154M35 150H285M60 118V92H98V118M222 118V92H260V118M43 118H111L127 78H193L210 118H277M43 123H114L132 85H188L205 123H277M74 115V77M246 115V77M74 91H246M75 81H245M79 82L100 91L124 82L147 91L170 82L194 91L218 82L240 91M138 140V96H182V140M144 140V102H176V140" stroke="currentColor" stroke-width="1.2"/><path d="M25 139L44 124M40 139L58 124M57 139L73 124M75 139L92 124M93 139L109 124M211 139L228 124M229 139L246 124M247 139L264 124M265 139L280 126" stroke="currentColor" stroke-width=".5"/><circle cx="160" cy="64" r="3" stroke="currentColor"/><path d="M160 36V58M160 69V76M23 118H32M287 118H299" stroke="currentColor" stroke-dasharray="3 3"/></svg></div>`; }
   function bookHome() {
     const descriptions = ['사람·도면·물량, 현장을 움직이는 기본','일정의 연결을 읽고 지연을 판단하기','실행예산부터 최종 예상원가까지','흙의 성질과 물의 흐름 이해하기','굴착 순서와 지지·계측의 연결','타설 전 검측부터 양생과 품질 판정','공종별 시공 순서와 병목 찾기','품질·안전·주변 영향을 함께 관리하기','기술적 판단을 계약 자료로 연결하기','복합 문제를 7단계로 답하는 연습'];
-    $('main').innerHTML = `<div class="hero"><div><div class="eyebrow">YOUR FIELD STUDY COMPANION</div><h1>현장을 이해하고,<br>해결을 말하는 힘.</h1><p class="intro">공사·공무의 첫 개념부터 복합 현장의 의사결정까지.<br>읽고, 떠올리고, 나의 말로 설명해보세요.</p></div>${blueprint()}</div>
+    $('main').innerHTML = `<div class="hero"><div><div class="eyebrow">YOUR FIELD STUDY COMPANION</div><h1>현장을 이해하고,<br>해결을 말하는 힘.</h1><p class="intro">안재영과 함께 신입의 첫 현장부터 5년차의 판단까지.<br>왜 멈추고, 무엇을 확인하고, 어떻게 이어갈지 생각해보세요.</p></div>${blueprint()}</div>
       <div class="journey">${[1,2,3].map((s,i)=>`<a href="#s${s}"><small>STEP 0${s} <span aria-hidden="true">↗</span></small><strong>${['기본을 쌓다','현장을 이해하다','해결안을 말하다'][i]}</strong><p>${DECK.filter(c=>c.s===s).length}${s===3?'개 실전 Case':'장 학습 카드'} · ${['공사·공무','토목 도메인','IM 문제 해결'][i]}</p></a>`).join('')}</div>
       <div class="section-title"><h2>현장관리 노트</h2><span>${BOOK.length} CHAPTERS · 읽기 → 카드 → 실전</span></div>${state.book.last?`<a class="backlink" href="#book/${state.book.last}">이어서 읽기 · ${esc(BOOK.find(b=>b.id===state.book.last)?.title)} →</a>`:''}
       <div class="chapter-grid">${BOOK.map((b,i)=>`<a class="chapter" href="#book/${b.id}"><span class="num">${String(b.id).padStart(2,'0')}</span><div><strong>${esc(b.title)}</strong><small>${esc(descriptions[i]||'개념을 읽고 연결된 카드로 연습하세요.')} ${state.book.read.includes(b.id)?'· 읽음':''}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div>${BOOK.length?'':'<p class="empty">교재 데이터가 없습니다. data/book.js를 확인하세요.</p>'}
