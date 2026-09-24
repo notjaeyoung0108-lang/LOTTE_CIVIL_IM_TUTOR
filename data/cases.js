@@ -1,4 +1,4 @@
-// 교육용 가상 Case. 비교 수치는 제시 조건 외에 확정하지 않습니다.
+// Supplemental practice; linked to the growth curriculum.
 window.CASES = [
   {
     "id": "case-001",
@@ -7,7 +7,7 @@ window.CASES = [
     "domain": "도심 지하차도",
     "field": "도심지",
     "category": "현장리스크",
-    "chapter": 10,
+    "chapter": 17,
     "tags": [
       "공정",
       "원가",
@@ -139,7 +139,7 @@ window.CASES = [
     "domain": "지하수",
     "field": "지반",
     "category": "현장리스크",
-    "chapter": 4,
+    "chapter": 5,
     "tags": [
       "지반",
       "현장리스크",
@@ -339,7 +339,7 @@ window.CASES = [
     "domain": "지장물",
     "field": "도심지",
     "category": "현장리스크",
-    "chapter": 8,
+    "chapter": 15,
     "tags": [
       "도심지",
       "현장리스크",
@@ -439,7 +439,7 @@ window.CASES = [
     "domain": "매설관",
     "field": "도심지",
     "category": "공무",
-    "chapter": 9,
+    "chapter": 15,
     "tags": [
       "도심지",
       "공무",
@@ -539,7 +539,7 @@ window.CASES = [
     "domain": "우기 토공",
     "field": "토공",
     "category": "공정",
-    "chapter": 4,
+    "chapter": 12,
     "tags": [
       "토공",
       "공정",
@@ -638,7 +638,7 @@ window.CASES = [
     "domain": "협력업체 관리",
     "field": "구조",
     "category": "공사",
-    "chapter": 2,
+    "chapter": 1,
     "tags": [
       "구조",
       "공사",
@@ -738,7 +738,7 @@ window.CASES = [
     "domain": "자재가격",
     "field": "구조",
     "category": "원가",
-    "chapter": 3,
+    "chapter": 16,
     "tags": [
       "구조",
       "원가",
@@ -837,7 +837,7 @@ window.CASES = [
     "domain": "거더 조달",
     "field": "교량",
     "category": "공정",
-    "chapter": 7,
+    "chapter": 14,
     "tags": [
       "교량",
       "공정",
@@ -936,7 +936,7 @@ window.CASES = [
     "domain": "콘크리트 품질",
     "field": "구조",
     "category": "품질·안전",
-    "chapter": 6,
+    "chapter": 11,
     "tags": [
       "구조",
       "품질·안전",
@@ -1036,7 +1036,7 @@ window.CASES = [
     "domain": "구조물 균열",
     "field": "구조",
     "category": "품질·안전",
-    "chapter": 6,
+    "chapter": 11,
     "tags": [
       "구조",
       "품질·안전",
@@ -1136,7 +1136,7 @@ window.CASES = [
     "domain": "흙막이 계측",
     "field": "지반",
     "category": "품질·안전",
-    "chapter": 5,
+    "chapter": 7,
     "tags": [
       "지반",
       "품질·안전",
@@ -1236,7 +1236,7 @@ window.CASES = [
     "domain": "인접 건물 침하",
     "field": "도심지",
     "category": "현장리스크",
-    "chapter": 8,
+    "chapter": 5,
     "tags": [
       "도심지",
       "현장리스크",
@@ -1336,7 +1336,7 @@ window.CASES = [
     "domain": "발파",
     "field": "터널",
     "category": "현장리스크",
-    "chapter": 7,
+    "chapter": 18,
     "tags": [
       "터널",
       "현장리스크",
@@ -1436,7 +1436,7 @@ window.CASES = [
     "domain": "야간공사",
     "field": "도심지",
     "category": "공정",
-    "chapter": 8,
+    "chapter": 14,
     "tags": [
       "도심지",
       "공정",
@@ -1535,7 +1535,7 @@ window.CASES = [
     "domain": "교통처리",
     "field": "도로",
     "category": "현장리스크",
-    "chapter": 8,
+    "chapter": 1,
     "tags": [
       "도로",
       "현장리스크",
@@ -1635,7 +1635,7 @@ window.CASES = [
     "domain": "공기단축",
     "field": "도로",
     "category": "공정",
-    "chapter": 2,
+    "chapter": 14,
     "tags": [
       "도로",
       "공정",
@@ -1734,7 +1734,7 @@ window.CASES = [
     "domain": "Critical Path",
     "field": "교량",
     "category": "공정",
-    "chapter": 2,
+    "chapter": 14,
     "tags": [
       "교량",
       "공정",
@@ -1833,7 +1833,7 @@ window.CASES = [
     "domain": "승인관리",
     "field": "지반",
     "category": "공무",
-    "chapter": 9,
+    "chapter": 15,
     "tags": [
       "지반",
       "공무",
@@ -1933,7 +1933,7 @@ window.CASES = [
     "domain": "설계·현황",
     "field": "도로",
     "category": "공무",
-    "chapter": 9,
+    "chapter": 2,
     "tags": [
       "도로",
       "공무",
@@ -2033,7 +2033,7 @@ window.CASES = [
     "domain": "원가 전망",
     "field": "종합",
     "category": "원가",
-    "chapter": 3,
+    "chapter": 16,
     "tags": [
       "종합",
       "원가",
@@ -2132,7 +2132,7 @@ window.CASES = [
     "domain": "계약 범위",
     "field": "종합",
     "category": "공무",
-    "chapter": 9,
+    "chapter": 15,
     "tags": [
       "종합",
       "공무",
@@ -2232,7 +2232,7 @@ window.CASES = [
     "domain": "가설공법 변경",
     "field": "교량",
     "category": "공사",
-    "chapter": 7,
+    "chapter": 6,
     "tags": [
       "교량",
       "공사",
@@ -2332,7 +2332,7 @@ window.CASES = [
     "domain": "장비 고장",
     "field": "터널",
     "category": "공정",
-    "chapter": 7,
+    "chapter": 14,
     "tags": [
       "터널",
       "공정",
@@ -2431,7 +2431,7 @@ window.CASES = [
     "domain": "인력 관리",
     "field": "구조",
     "category": "공사",
-    "chapter": 2,
+    "chapter": 14,
     "tags": [
       "구조",
       "공사",
@@ -2531,7 +2531,7 @@ window.CASES = [
     "domain": "안전·공정 충돌",
     "field": "교량",
     "category": "품질·안전",
-    "chapter": 7,
+    "chapter": 17,
     "tags": [
       "교량",
       "품질·안전",
@@ -2631,7 +2631,7 @@ window.CASES = [
     "domain": "품질·공정 충돌",
     "field": "구조",
     "category": "품질·안전",
-    "chapter": 6,
+    "chapter": 11,
     "tags": [
       "구조",
       "품질·안전",
@@ -2731,7 +2731,7 @@ window.CASES = [
     "domain": "민원·공정 충돌",
     "field": "도심지",
     "category": "현장리스크",
-    "chapter": 8,
+    "chapter": 17,
     "tags": [
       "도심지",
       "현장리스크",
@@ -2831,7 +2831,7 @@ window.CASES = [
     "domain": "준공관리",
     "field": "종합",
     "category": "공무",
-    "chapter": 10,
+    "chapter": 18,
     "tags": [
       "종합",
       "공무",
@@ -2931,7 +2931,7 @@ window.CASES = [
     "domain": "기술·계약 협의",
     "field": "구조",
     "category": "공무",
-    "chapter": 9,
+    "chapter": 15,
     "tags": [
       "구조",
       "공무",
@@ -3031,7 +3031,7 @@ window.CASES = [
     "domain": "복합 현장 리스크",
     "field": "종합",
     "category": "현장리스크",
-    "chapter": 10,
+    "chapter": 17,
     "tags": [
       "종합",
       "현장리스크",
@@ -3132,7 +3132,7 @@ window.CASES = [
     "domain": "터널 종합 의사결정",
     "field": "종합",
     "category": "현장리스크",
-    "chapter": 10,
+    "chapter": 18,
     "tags": [
       "종합",
       "현장리스크",

@@ -1,11 +1,11 @@
 {
-  "date": "2026-09-24T07:35:11.636Z",
+  "date": "2026-09-24T09:06:29.260Z",
   "browser": "150.0.7871.125",
   "checks": [
-    "10 chapters at 320/390/1280px: protagonist, decision questions, diagrams, no page overflow",
-    "wide diagram scrolls inside its own container on mobile",
-    "fenced HTML escaped; literal Markdown preserved; paragraph-to-fence boundary works",
-    "basic card answer and seven-step Case still render"
+    "old ten-chapter reads reset for new edition; card grades, drafts, logs preserved; A/B reads and resume persist separately",
+    "all 36 reading surfaces at 320/390/1280px; narrative/analysis separation, diagrams and no document overflow",
+    "story → same-event learning → next story; final return and invalid chapter fallback",
+    "fenced HTML remains escaped and literal Markdown preserved"
   ],
   "errors": []
 }

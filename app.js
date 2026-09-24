@@ -54,7 +54,8 @@
     }
     return out.join('');
   }
-  const defaults = () => ({version:1, cards:{}, cases:{}, filters:{category:'전체',difficulty:'전체',field:'전체'}, log:[], book:{last:0,read:[]}});
+  const BOOK_EDITION = 'growth-2026-09';
+  const defaults = () => ({version:1, cards:{}, cases:{}, filters:{category:'전체',difficulty:'전체',field:'전체'}, log:[], book:{edition:BOOK_EDITION,last:0,part:'story',read:[]}});
   const object = v => v && typeof v === 'object' && !Array.isArray(v);
   const number = v => Number.isFinite(v) && v >= 0;
   function warning(message) { $('storage-warning').hidden = !message; $('storage-warning').textContent = message; }
@@ -70,8 +71,12 @@
     }
     for (const [key, options] of Object.entries({category:categories,difficulty:difficulties,field:fields})) if (options.includes(raw.filters?.[key])) s.filters[key] = raw.filters[key];
     s.log = Array.isArray(raw.log) ? raw.log.filter(l => object(l) && byId.has(l.id) && number(l.at) && [1,2,3].includes(l.grade)).map(l => ({id:l.id,at:l.at,grade:l.grade})) : [];
-    s.book.last = BOOK.some(b => b.id === raw.book?.last) ? raw.book.last : 0;
-    s.book.read = Array.isArray(raw.book?.read) ? raw.book.read.filter(id => BOOK.some(b => b.id === id)) : [];
+    // Keep card practice; old book completion does not apply to new manuscripts.
+    if (raw.book?.edition === BOOK_EDITION) {
+      s.book.last = BOOK.some(b => b.id === raw.book.last) ? raw.book.last : 0;
+      s.book.part = raw.book.part === 'study' ? 'study' : 'story';
+      s.book.read = Array.isArray(raw.book.read) ? raw.book.read.filter(key => BOOK.some(b => key === `${b.id}/story` || key === `${b.id}/study`)) : [];
+    }
     return s;
   }
   let state = defaults();
@@ -113,7 +118,7 @@
   function filters(s) { return chips('category',categories) + (s===3 ? `<div class="filter-label">난이도</div>${chips('difficulty',difficulties)}<div class="filter-label">Case 분야</div>${chips('field',fields)}` : ''); }
   function heading(s) { return `<div class="eyebrow">STEP 0${s} / ${s===1?'FOUNDATION':s===2?'CIVIL ENGINEERING':'CASE TRAINING'}</div><div class="topline"><h1>${labels[s]}</h1><span class="pill">${DECK.filter(c=>c.s===s).length}${s===3?' CASES':' CARDS'}</span></div><p class="intro">${subtitles[s]}</p>`; }
   function gradeButtons() { return `<div class="grades" aria-label="학습 난이도 자기평가">${ratings.map((label, i) => `<button class="grade" data-grade="${i+1}"><strong>${label}</strong><small>${['1분','20분','1일'][i]} 뒤 복습</small></button>`).join('')}</div><p class="shortcut"><kbd>Space</kbd> 앞·뒤 전환 &nbsp; <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> 자기평가 · 입력 중에는 단축키가 꺼집니다.</p>`; }
-  function related(c) { const b = BOOK.find(b => b.id===c.chapter); return b ? `<div class="related"><small>개념이 막힐 때, 교재로 돌아가세요.</small><br><a href="#book/${b.id}">CH.${String(b.id).padStart(2,'0')} ${esc(b.title)} ↗</a></div>` : ''; }
+  function related(c) { const b = BOOK.find(b => b.id===c.chapter); return b ? `<div class="related"><small>같은 판단을 PART B 학습에서 다시 살펴보세요.</small><br><a href="#book/${b.id}/study">CASE ${String(b.id).padStart(2,'0')} ${esc(b.title)} ↗</a></div>` : ''; }
   function metadata(c) { return `<div class="meta"><span class="tag level">${c.s===3?c.difficulty:`${c.s}단계`}</span><span>${esc(c.domain)}</span><span>·</span><span>${(state.cards[c.id]?.reps || 0)+1}회째</span>${(c.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`; }
   function flash(c, back) {
     return `<article class="panel">${metadata(c)}${back ? `<h2>${esc(c.q)}</h2><div class="prose">${markdown(c.a)}</div>${related(c)}` : `<div class="flash-front"><h2>${esc(c.q)}</h2><p>${c.s===1?'정의 → 역할 → 현장 활용':'현상 → 원인 → 영향 → 관리방법'} 순서로 설명해보세요.</p></div>`}<div class="card-id"><span>${c.id.toUpperCase()} · ${esc(c.g)}</span><span>${back?'ANSWER':'QUESTION'}</span></div></article>${back?`<button class="button subtle full" data-action="flip">← 질문 다시 보기</button>${gradeButtons()}`:`<button class="button primary full" data-action="flip">정답 보기 <span aria-hidden="true">↗</span></button><p class="shortcut"><kbd>Space</kbd> 정답 보기</p>`}`;
@@ -163,18 +168,29 @@
   }
   function blueprint() { return `<div class="blueprint" aria-hidden="true"><span>FIELD NOTE / SECTION 01</span><svg viewBox="0 0 320 190" fill="none"><path d="M22 140H298M35 146V154M285 146V154M35 150H285M60 118V92H98V118M222 118V92H260V118M43 118H111L127 78H193L210 118H277M43 123H114L132 85H188L205 123H277M74 115V77M246 115V77M74 91H246M75 81H245M79 82L100 91L124 82L147 91L170 82L194 91L218 82L240 91M138 140V96H182V140M144 140V102H176V140" stroke="currentColor" stroke-width="1.2"/><path d="M25 139L44 124M40 139L58 124M57 139L73 124M75 139L92 124M93 139L109 124M211 139L228 124M229 139L246 124M247 139L264 124M265 139L280 126" stroke="currentColor" stroke-width=".5"/><circle cx="160" cy="64" r="3" stroke="currentColor"/><path d="M160 36V58M160 69V76M23 118H32M287 118H299" stroke="currentColor" stroke-dasharray="3 3"/></svg></div>`; }
   function bookHome() {
-    const descriptions = ['사람·도면·물량, 현장을 움직이는 기본','일정의 연결을 읽고 지연을 판단하기','실행예산부터 최종 예상원가까지','흙의 성질과 물의 흐름 이해하기','굴착 순서와 지지·계측의 연결','타설 전 검측부터 양생과 품질 판정','공종별 시공 순서와 병목 찾기','품질·안전·주변 영향을 함께 관리하기','기술적 판단을 계약 자료로 연결하기','복합 문제를 7단계로 답하는 연습'];
-    $('main').innerHTML = `<div class="hero"><div><div class="eyebrow">YOUR FIELD STUDY COMPANION</div><h1>현장을 이해하고,<br>해결을 말하는 힘.</h1><p class="intro">안재영과 함께 신입의 첫 현장부터 5년차의 판단까지.<br>왜 멈추고, 무엇을 확인하고, 어떻게 이어갈지 생각해보세요.</p></div>${blueprint()}</div>
-      <div class="journey">${[1,2,3].map((s,i)=>`<a href="#s${s}"><small>STEP 0${s} <span aria-hidden="true">↗</span></small><strong>${['기본을 쌓다','현장을 이해하다','해결안을 말하다'][i]}</strong><p>${DECK.filter(c=>c.s===s).length}${s===3?'개 실전 Case':'장 학습 카드'} · ${['공사·공무','토목 도메인','IM 문제 해결'][i]}</p></a>`).join('')}</div>
-      <div class="section-title"><h2>현장관리 노트</h2><span>${BOOK.length} CHAPTERS · 읽기 → 카드 → 실전</span></div>${state.book.last?`<a class="backlink" href="#book/${state.book.last}">이어서 읽기 · ${esc(BOOK.find(b=>b.id===state.book.last)?.title)} →</a>`:''}
-      <div class="chapter-grid">${BOOK.map((b,i)=>`<a class="chapter" href="#book/${b.id}"><span class="num">${String(b.id).padStart(2,'0')}</span><div><strong>${esc(b.title)}</strong><small>${esc(descriptions[i]||'개념을 읽고 연결된 카드로 연습하세요.')} ${state.book.read.includes(b.id)?'· 읽음':''}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div>${BOOK.length?'':'<p class="empty">교재 데이터가 없습니다. data/book.js를 확인하세요.</p>'}
-      <div class="priority">학습의 기준 &nbsp; 안전과 품질을 먼저 확보하고, 공정·원가·민원을 함께 판단합니다.</div><p class="footer-note">LOTTE CIVIL IM TUTOR · 개인 면접 학습도구 · 롯데건설 공식 서비스가 아닙니다.<br>별도 로그인 없이 이 브라우저에 학습 기록을 저장합니다.</p>`;
+    const groups = [...new Set(BOOK.map(b=>b.growth))];
+    $('main').innerHTML = `<div class="hero"><div><div class="eyebrow">FIELD SIMULATION / 성장형 현장 교재</div><h1>현장을 경험하고,<br>판단의 이유를 배우다.</h1><p class="intro">신입 안재영이 담당구간을 판단하고 후배에게 설명하기까지.<br>한 사건의 소설을 읽은 뒤, 공사·공무의 사고체계로 해부합니다.</p></div>${blueprint()}</div>
+      <section class="panel"><h2>한 사건, 두 번의 읽기</h2><p>PART A. 현장소설에서 공간·사람·갈등을 경험합니다. 사건이 끝나면 PART B. 학습에서 미확인 사실, 통제 범위, 대안과 그 이유를 검토합니다.</p><p class="note">18개 사건 · 소설과 학습 별도 화면 · 숙련된 담당자의 사고방식을 훈련하며 실제 현장 경력을 대체하지 않습니다.</p></section>
+      ${state.book.last?`<a class="backlink" href="#book/${state.book.last}/${state.book.part}">이어서 읽기 · ${esc(BOOK.find(b=>b.id===state.book.last)?.title)} · PART ${state.book.part==='study'?'B':'A'} →</a>`:''}
+      ${groups.map((group,i)=>`<section><div class="section-title"><h2>${String(i+1).padStart(2,'0')} ${esc(group)}</h2></div><div class="chapter-grid">${BOOK.filter(b=>b.growth===group).map(b=>`<a class="chapter" href="#book/${b.id}/story"><span class="num">${String(b.id).padStart(2,'0')}</span><div><strong>${esc(b.title)}</strong><small>PART A 소설 ${state.book.read.includes(b.id+'/story')?'✓':''} → PART B 학습 ${state.book.read.includes(b.id+'/study')?'✓':''}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div></section>`).join('')}
+      ${BOOK.length?'':'<p class="empty">교재 데이터가 없습니다. data/book.js를 확인하세요.</p>'}
+      <div class="section-title"><h2>보조 회상과 전이 연습</h2></div><div class="journey">${[1,2,3].map((s,i)=>`<a href="#s${s}"><small>REVIEW 0${s} ↗</small><strong>${['기본을 회상하다','기술을 연결하다','다른 사건에 적용하다'][i]}</strong><p>${DECK.filter(c=>c.s===s).length}${s===3?'개 실전 Case':'장 학습 카드'}</p></a>`).join('')}</div>
+      <div class="reference-links"><a href="docs/00_교재사용법.md">교재 사용법</a><a href="reference/현장용어집.md">현장용어집</a><a href="reference/도면읽기.md">도면 읽기</a><a href="reference/기술검증.md">기술 검증 범위</a></div>
+      <p class="footer-note">LOTTE CIVIL IM TUTOR · 개인 학습도구 · 롯데건설 공식 서비스가 아닙니다.<br>인물·현장·수량은 교육용 가상 설정입니다. 학습 기록은 이 브라우저에 저장됩니다.</p>`;
   }
-  function bookChapter(id) {
+  function bookChapter(id, part = 'story') {
     const b = BOOK.find(x=>x.id===id); if (!b) return bookHome();
-    state.book.last=id; save();
-    const index = BOOK.indexOf(b), linked = DECK.filter(c=>c.chapter===id);
-    $('main').innerHTML = `<a class="backlink" href="#book">← 교재 목차</a><div class="eyebrow">FIELD NOTE / CHAPTER ${String(id).padStart(2,'0')}</div><article class="panel prose">${markdown(b.md)}<div class="related"><h3>이 개념을 학습으로 연결하기</h3>${[1,2,3].map(s=>{const c=linked.find(c=>c.s===s);return c?`<a href="#s${s}/${c.id}">${s}단계 · ${esc(c.title||c.g)} ↗</a>`:'';}).join('')}</div></article><button class="button full" data-action="read" data-chapter="${id}">${state.book.read.includes(id)?'✓ 읽은 교재':'이 장 읽음으로 표시'}</button><div class="book-nav">${index>0?`<a class="button" href="#book/${BOOK[index-1].id}">← 이전 장</a>`:'<span></span>'}<a class="button subtle" href="#book">목차</a>${index<BOOK.length-1?`<a class="button" href="#book/${BOOK[index+1].id}">다음 장 →</a>`:'<span></span>'}</div>`;
+    part = part === 'study' ? 'study' : 'story';
+    state.book.last=id; state.book.part=part; save();
+    const index = BOOK.indexOf(b), linked = DECK.filter(c=>c.chapter===id), isStudy=part==='study';
+    const prev = isStudy ? `#book/${id}/story` : index>0 ? `#book/${BOOK[index-1].id}/study` : '#book';
+    const next = !isStudy ? `#book/${id}/study` : index<BOOK.length-1 ? `#book/${BOOK[index+1].id}/story` : '#book';
+    $('main').innerHTML = `<a class="backlink" href="#book">← 성장형 교재 목차</a><div class="eyebrow">CHAPTER ${String(id).padStart(2,'0')} / ${esc(b.growth)} / PART ${isStudy?'B':'A'}</div>
+      <nav class="book-parts" aria-label="이 사건의 읽기 영역"><a class="button ${!isStudy?'primary':''}" href="#book/${id}/story" ${!isStudy?'aria-current="page"':''}>PART A. 현장소설</a><a class="button ${isStudy?'primary':''}" href="#book/${id}/study" ${isStudy?'aria-current="page"':''}>PART B. 학습</a></nav>
+      <article class="panel prose">${markdown(isStudy?b.studyMd:b.md)}</article>
+      <button class="button full" data-action="read" data-chapter="${id}" data-part="${part}">${state.book.read.includes(id+'/'+part)?'✓ 읽은 영역':`PART ${isStudy?'B':'A'} 읽음으로 표시`}</button>
+      <div class="book-nav"><a class="button" href="${prev}">${isStudy?'← 이 사건 소설':'← 이전 학습'}</a><a class="button subtle" href="#book">목차</a><a class="button" href="${next}">${!isStudy?'이 사건 학습 →':index<BOOK.length-1?'다음 사건 →':'전체 목차 →'}</a></div>
+      ${isStudy&&linked.length?`<section class="related"><h3>보조 회상·전이 연습</h3>${[1,2,3].map(s=>{const c=linked.find(c=>c.s===s);return c?`<a href="#s${s}/${c.id}">${s}단계 · ${esc(c.title||c.g)} ↗</a>`:'';}).join('')}</section>`:''}`;
   }
   function caseListSection(title, list, empty) { return `<div class="section-title"><h2>${title}</h2><span>${list.length}개</span></div>${list.length?`<div class="case-list">${list.slice(0,6).map(c=>`<a class="case-item" href="#s3/${c.id}"><small>${c.id.slice(-3)} · ${c.difficulty}${state.cards[c.id]?.misses?` · 몰랐어요 ${state.cards[c.id].misses}회`:''}</small><strong>${esc(c.title)}</strong></a>`).join('')}</div>${list.length>6?'<p class="note">최근/우선 6개를 표시합니다. 전체 목록은 실전 탭에서 확인하세요.</p>':''}`:`<p class="note">${empty}</p>`}`; }
   function home() {
@@ -207,7 +223,7 @@
         if (nextDue && sessions[stage].id !== nextDue.id) sessions[stage] = {id:nextDue.id,back:false};
       }
       renderStudy();
-    } else if (routeName==='book') { if(routeArg)bookChapter(Number(routeArg));else bookHome(); }
+    } else if (routeName==='book') { if(routeArg)bookChapter(Number(routeArg),parts[2]);else bookHome(); }
     else home();
     badges(); window.scrollTo(0,0);
     $('main').focus({preventScroll:true});
@@ -229,7 +245,7 @@
     if(action==='hint'){const c=byId.get(sessions[stage].id),cs=caseState(c.id);cs.hints=Math.min(c.hints.length,cs.hints+1);save();const y=scrollY;renderStudy();window.scrollTo(0,y);}
     if(action==='practice'){const c=pool(stage).sort((a,b)=>(state.cards[a.id]?.last||0)-(state.cards[b.id]?.last||0))[0];if(c){sessions[stage]={id:c.id,back:false};renderStudy();}}
     if(action==='clear-filters'){state.filters=defaults().filters;save();clearRouteArg();renderStudy();}
-    if(action==='read'){const id=Number(button.dataset.chapter);state.book.read=[...new Set([...state.book.read,id])];save();button.textContent='✓ 읽은 교재';toast('읽음으로 표시했습니다.');}
+    if(action==='read'){const key=Number(button.dataset.chapter)+'/'+button.dataset.part;state.book.read=[...new Set([...state.book.read,key])];save();button.textContent='✓ 읽은 영역';toast('읽음으로 표시했습니다.');}
     if(action==='reset-ask'){$('reset-confirm').hidden=false;$('reset-confirm').scrollIntoView({block:'center'});}
     if(action==='reset-cancel')$('reset-confirm').hidden=true;
     if(action==='reset-confirm'){state=defaults();[1,2,3].forEach(s=>{sessions[s]={id:null,back:false};});save();home();badges();toast('학습 기록을 초기화했습니다.');}

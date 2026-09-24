@@ -1,8 +1,8 @@
 {
-  "date": "2026-09-22",
+  "date": "2026-09-24T09:06:34.552Z",
   "browser": "150.0.7871.125",
   "tests": [
-    "file:// direct load; 5 tabs; 10 chapters",
+    "file:// direct load; 5 tabs; 18 events",
     "all bottom routes and active indicators",
     "keyboard flip and all three exact intervals (1m/20m/24h)",
     "due cards before new; oldest due first; reload persistence",
@@ -11,7 +11,7 @@
     "difficulty/field filters, zero-match state, persisted selections, filter reset",
     "all category chips",
     "32 Cases directly accessible; front/back, seven steps, tables, spoken answer, eight rubric items",
-    "10 Markdown readers, read persistence and cross-links",
+    "18 learning readers, read persistence and cross-links",
     "dashboard, progress, recent history, JSON backup, reset cancellation",
     "no document horizontal overflow at 320/375/390/768/1280px; comparison tables scroll locally",
     "full confirmed reset and persistence",

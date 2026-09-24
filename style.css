@@ -1078,3 +1078,7 @@ details>summary {
     min-width:0;
   }
 }
+/* Separate reading surfaces for narrative and case analysis. */
+.book-parts,.reference-links{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
+.book-parts .button{flex:1;text-align:center;min-width:130px}
+.reference-links a{font-size:14px}

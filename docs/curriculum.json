@@ -1,0 +1,128 @@
+[
+  {
+    "id": 1,
+    "title": "첫날, 누구의 지시인가",
+    "growth": "현장을 본다",
+    "story": "part_a/01.md",
+    "study": "part_b/01.md"
+  },
+  {
+    "id": 2,
+    "title": "먹과 레벨 사이",
+    "growth": "현장을 본다",
+    "story": "part_a/02.md",
+    "study": "part_b/02.md"
+  },
+  {
+    "id": 3,
+    "title": "덤프가 줄을 서는 이유",
+    "growth": "작업을 이해한다",
+    "story": "part_a/03.md",
+    "study": "part_b/03.md"
+  },
+  {
+    "id": 4,
+    "title": "높이는 맞는데 땅이 다르다",
+    "growth": "작업을 이해한다",
+    "story": "part_a/04.md",
+    "study": "part_b/04.md"
+  },
+  {
+    "id": 5,
+    "title": "물만 빼면 되는 줄 알았다",
+    "growth": "작업을 이해한다",
+    "story": "part_a/05.md",
+    "study": "part_b/05.md"
+  },
+  {
+    "id": 6,
+    "title": "버팀 하나의 자리",
+    "growth": "구간을 연결한다",
+    "story": "part_a/06.md",
+    "study": "part_b/06.md"
+  },
+  {
+    "id": 7,
+    "title": "기준 아래에서 빨라지는 숫자",
+    "growth": "구간을 연결한다",
+    "story": "part_a/07.md",
+    "study": "part_b/07.md"
+  },
+  {
+    "id": 8,
+    "title": "선에서 철근으로",
+    "growth": "구간을 연결한다",
+    "story": "part_a/08.md",
+    "study": "part_b/08.md"
+  },
+  {
+    "id": 9,
+    "title": "피복과 관통관 사이",
+    "growth": "문제를 판단한다",
+    "story": "part_a/09.md",
+    "study": "part_b/09.md"
+  },
+  {
+    "id": 10,
+    "title": "레미콘이 오지 않는 시간",
+    "growth": "문제를 판단한다",
+    "story": "part_a/10.md",
+    "study": "part_b/10.md"
+  },
+  {
+    "id": 11,
+    "title": "굳었다는 말의 빈틈",
+    "growth": "문제를 판단한다",
+    "story": "part_a/11.md",
+    "study": "part_b/11.md"
+  },
+  {
+    "id": 12,
+    "title": "덮기 전에 남겨야 할 것",
+    "growth": "직무를 연결한다",
+    "story": "part_a/12.md",
+    "study": "part_b/12.md"
+  },
+  {
+    "id": 13,
+    "title": "Rev.2 작업 중 Rev.3",
+    "growth": "직무를 연결한다",
+    "story": "part_a/13.md",
+    "study": "part_b/13.md"
+  },
+  {
+    "id": 14,
+    "title": "야근 전에 공정표를 펴다",
+    "growth": "직무를 연결한다",
+    "story": "part_a/14.md",
+    "study": "part_b/14.md"
+  },
+  {
+    "id": 15,
+    "title": "지시를 계약의 언어로",
+    "growth": "복합 조건을 비교한다",
+    "story": "part_a/15.md",
+    "study": "part_b/15.md"
+  },
+  {
+    "id": 16,
+    "title": "덜 쓴 돈과 남은 공사",
+    "growth": "복합 조건을 비교한다",
+    "story": "part_a/16.md",
+    "study": "part_b/16.md"
+  },
+  {
+    "id": 17,
+    "title": "한 구간의 아침",
+    "growth": "담당구간을 판단한다",
+    "story": "part_a/17.md",
+    "study": "part_b/17.md"
+  },
+  {
+    "id": 18,
+    "title": "왜 전부 멈춰야 한다고 생각해",
+    "growth": "판단을 설명한다",
+    "story": "part_a/18.md",
+    "study": "part_b/18.md"
+  }
+]

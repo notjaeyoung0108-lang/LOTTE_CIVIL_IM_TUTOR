@@ -1,15 +1,10 @@
-# 이 폴더와 교육자료의 위치
+# 검증 산출물
 
-이 폴더는 웹앱의 브라우저 검증 결과와 화면 이미지를 보관합니다.
+현행 교재는 [사용법](../00_교재사용법.md)과 [전체 목차](../../README.md)를 따른다. 실제 검증 범위·실행 결과는 [QA 기록](../QA.md)에 모은다.
 
-교육자료 보강 내용은 [현장실무 교육 안내](../현장실무_교육안내.md)에서 확인하세요. 실제 교재는 상위 `docs/`의 `01_*.md`부터 `10_*.md`까지이며 앱의 교재 탭에도 반영됩니다.
+- results.json: 전체 웹앱 회귀 검증
+- simulation-results.json: 18개 사건 × A/B 분리·기록 이전·반응형 검증
+- rebuild-curriculum.png: 성장형 목차
+- rebuild-story-mobile.png / rebuild-study-mobile.png: 같은 사건의 분리된 두 화면
 
-- [12주 과정·평가·종합 실습](../10_IM_문제해결.md)
-- [기존 앱 QA 기록](../QA.md)
-- [교육 보강 화면 검증 결과](education-results.json)
-- [모바일 토공 교재](education-mobile-earthwork.png)
-- [데스크톱 교육과정](education-desktop-curriculum.png)
-
-`results.json`과 기존 이미지는 2026-09-22의 검증 이력입니다. 교육자료의 기술적 감수 결과를 의미하지 않습니다.
-
-`education-results.json`과 `education-*.png`는 2026-09-24 보강 후의 교재 화면 검증입니다. Chrome에서 10개 장의 본문·표, 320/390/1280px 화면의 문서 가로 넘침, 읽음 표시 저장을 확인했습니다. 전체 앱 회귀검증과 현장 기술 감수는 이 결과의 범위에 포함되지 않습니다.
+education-results.json과 education-*.png는 개편 전 10장 교재의 역사적 화면 기록이다. 현행 내용 검증 결과로 인용하지 않는다. 웹 테스트는 기술자에 의한 현장 감수를 뜻하지 않는다.

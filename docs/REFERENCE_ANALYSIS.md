@@ -1,3 +1,5 @@
+> 초기 앱 구현의 역사적 기록(2026-09-22)이다. 아래 10장 설명은 현재 교재 구조가 아니다. 현행 구조는 [전면개편 설계서](REBUILD_DESIGN.md)를 따른다.
+
 # 참고 저장소 분석과 구현 결정
 
 분석 대상: [SKCT_BIM-5D](https://github.com/notjaeyoung0108-lang/SKCT_BIM-5D)
