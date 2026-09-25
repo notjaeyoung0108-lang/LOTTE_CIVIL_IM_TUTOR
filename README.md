@@ -64,6 +64,11 @@ index.html / app.js / style.css
  docs/part_b/01~18.md    직무별 학습 CASE
  docs/REBUILD_DESIGN.md  원재료 분석·목차·성장·Map
  reference/             용어·약어·도면·기술 검증
+ docs/CURRICULUM_STRUCTURE.md  3챕터 교재 전체 구조
+ docs/ch1-flow/         챕터 1 기본 Flow 원문
+ docs/ch2-normal/       챕터 2 공종별 정상 순서 원문
+ docs/ch3-problem/      챕터 3 판단문제 원문
+ data/course.js         3챕터 교재 웹 데이터
  data/book.js           원문에서 생성한 웹 교재
  data/stage*.js          보조 회상 카드
  data/cases.js          보조 실전 문제
@@ -75,7 +80,9 @@ index.html / app.js / style.css
 ```sh
 node tools/build-book.js
 node tools/build-a01.js
+node tools/build-course.js
 node tools/validate.js
+node tools/course-render-qa.js
 node --check app.js
 ```
 
@@ -87,7 +94,7 @@ PLAYWRIGHT_PATH=/path/to/playwright node tools/simulation-qa.cjs
 PLAYWRIGHT_PATH=/path/to/playwright node tools/a01-web-qa.cjs
 ```
 
-Chrome 경로가 기본 macOS 설치 위치와 다르면 CHROME_PATH로 지정한다. [QA 기록](docs/QA.md)은 웹 기능·콘텐츠 구조 검증과 기술 감수의 범위를 구별한다. 기존 교재 원문 변경 후 `data/book.js`, A01 원문 변경 후 `data/a01.js`를 각각 다시 생성해야 배포된 화면이 갱신된다.
+`tools/course-render-qa.js`는 최소 DOM shim을 써서 브라우저 없이 교재 화면을 검증한다. Chrome 경로가 기본 macOS 설치 위치와 다르면 CHROME_PATH로 지정한다. [QA 기록](docs/QA.md)은 웹 기능·콘텐츠 구조 검증과 기술 감수의 범위를 구별한다. 기존 교재 원문 변경 후 `data/book.js`, A01 원문 변경 후 `data/a01.js`, 챕터 1~3 원문 변경 후 `data/course.js`를 각각 다시 생성해야 배포된 화면이 갱신된다.
 
 ### 이미지 플래시카드
 

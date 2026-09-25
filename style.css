@@ -274,7 +274,8 @@ main {
   margin-left:auto;
   color:#87998e;
 }
-.golden-entry {
+.golden-entry,
+.course-entry {
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -285,14 +286,17 @@ main {
   border-radius:12px;
   background:linear-gradient(135deg,#e6eee7,#fff 70%);
 }
-.golden-entry:hover {
+.golden-entry:hover,
+.course-entry:hover {
   border-color:var(--green);
   box-shadow:0 8px 24px #294f4314;
 }
-.golden-entry h2 {
+.golden-entry h2,
+.course-entry h2 {
   margin:4px 0;
 }
-.golden-entry p {
+.golden-entry p,
+.course-entry p {
   color:var(--green);
   font-size:13px;
   margin-bottom:5px;
@@ -1048,11 +1052,13 @@ details>summary {
   .chapter strong {
     font-size:14px;
   }
-  .golden-entry {
+  .golden-entry,
+  .course-entry {
     padding:20px;
     gap:14px;
   }
-  .golden-entry p {
+  .golden-entry p,
+  .course-entry p {
     font-size:12px;
   }
   .panel {

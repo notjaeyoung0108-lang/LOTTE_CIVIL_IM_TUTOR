@@ -5,6 +5,8 @@
   const DECK = [...(window.STAGE1 || []), ...(window.STAGE2 || []), ...(window.CASES || [])];
   const BOOK = window.BOOK || [];
   const A01 = window.A01_GOLDEN || {id:'A01',title:'공정계획 수립',status:'Golden Sample',flow:'',items:[]};
+  const COURSE = window.COURSE || {title:'토목현장 실무 교재', flow:'', chapters:[]};
+  const COURSE_SECTIONS = COURSE.chapters.flatMap(ch => ch.sections.map(s => ({...s, chapter:ch})));
   const byId = new Map(DECK.map(c => [c.id, c]));
   const categories = ['전체', '공사', '공무', '공정', '원가', '품질·안전', '현장리스크'];
   const difficulties = ['전체', '기본', '중급', '고급'];
@@ -64,7 +66,7 @@
     return out.join('');
   }
   const BOOK_EDITION = 'growth-2026-09';
-  const defaults = () => ({version:1, cards:{}, cases:{}, filters:{category:'전체',difficulty:'전체',field:'전체'}, log:[], book:{edition:BOOK_EDITION,last:0,part:'story',read:[]}});
+  const defaults = () => ({version:1, cards:{}, cases:{}, filters:{category:'전체',difficulty:'전체',field:'전체'}, log:[], book:{edition:BOOK_EDITION,last:0,part:'story',read:[]}, course:{last:'',read:[]}});
   const object = v => v && typeof v === 'object' && !Array.isArray(v);
   const number = v => Number.isFinite(v) && v >= 0;
   function warning(message) { $('storage-warning').hidden = !message; $('storage-warning').textContent = message; }
@@ -85,6 +87,10 @@
       s.book.last = BOOK.some(b => b.id === raw.book.last) ? raw.book.last : 0;
       s.book.part = raw.book.part === 'study' ? 'study' : 'story';
       s.book.read = Array.isArray(raw.book.read) ? raw.book.read.filter(key => BOOK.some(b => key === `${b.id}/story` || key === `${b.id}/study`)) : [];
+    }
+    if (object(raw.course)) {
+      s.course.last = COURSE_SECTIONS.some(x => x.id === raw.course.last) ? raw.course.last : '';
+      s.course.read = Array.isArray(raw.course.read) ? raw.course.read.filter(id => COURSE_SECTIONS.some(x => x.id === id)) : [];
     }
     return s;
   }
@@ -183,6 +189,7 @@
     const groups = [...new Set(BOOK.map(b=>b.growth))];
     $('main').innerHTML = `<div class="hero"><div><div class="eyebrow">FIELD SIMULATION / 성장형 현장 교재</div><h1>현장을 경험하고,<br>판단의 이유를 배우다.</h1><p class="intro">신입 안재영이 담당구간을 판단하고 후배에게 설명하기까지.<br>한 사건의 소설을 읽은 뒤, 공사·공무의 사고체계로 해부합니다.</p></div>${blueprint()}</div>
       <section class="panel"><h2>한 사건, 두 번의 읽기</h2><p>PART A. 현장소설에서 공간·사람·갈등을 경험합니다. 사건이 끝나면 PART B. 학습에서 미확인 사실, 통제 범위, 대안과 그 이유를 검토합니다.</p><p class="note">18개 사건 · 소설과 학습 별도 화면 · 숙련된 담당자의 사고방식을 훈련하며 실제 현장 경력을 대체하지 않습니다.</p></section>
+      <a class="course-entry" href="#course"><div><span class="golden-kicker">COURSE · 토목현장 실무 교재</span><h2>기본 Flow → 올바른 상황 → 문제풀이</h2><p>골격을 먼저 세우고, 정상 순서를 익힌 뒤, 어긋난 상황을 판단합니다.</p><small>${COURSE_SECTIONS.length}개 절 · 챕터 ${COURSE.chapters.filter(ch=>ch.sections.length).length} / ${COURSE.chapters.length} 공개${state.course.read.length?` · 읽음 ${state.course.read.length}개`:''}</small></div><span class="golden-arrow" aria-hidden="true">↗</span></a>
       <a class="golden-entry" href="#a01"><div><span class="golden-kicker">GOLDEN SAMPLE · A01</span><h2>공정계획 수립 실무 교과과정</h2><p>Layer 1 실무지식 → Layer 2 단위 판단 → Layer 3 통합 CASE</p><small>${A01.items.length}개 검수 완료 문서 · ${esc(A01.flow)}</small></div><span class="golden-arrow" aria-hidden="true">↗</span></a>
       ${state.book.last?`<a class="backlink" href="#book/${state.book.last}/${state.book.part}">이어서 읽기 · ${esc(BOOK.find(b=>b.id===state.book.last)?.title)} · PART ${state.book.part==='study'?'B':'A'} →</a>`:''}
       ${groups.map((group,i)=>`<section><div class="section-title"><h2>${String(i+1).padStart(2,'0')} ${esc(group)}</h2></div><div class="chapter-grid">${BOOK.filter(b=>b.growth===group).map(b=>`<a class="chapter" href="#book/${b.id}/story"><span class="num">${String(b.id).padStart(2,'0')}</span><div><strong>${esc(b.title)}</strong><small>PART A 소설 ${state.book.read.includes(b.id+'/story')?'✓':''} → PART B 학습 ${state.book.read.includes(b.id+'/study')?'✓':''}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div></section>`).join('')}
@@ -202,6 +209,26 @@
     const item=A01.items.find(value=>value.id===id);if(!item)return a01Home();
     const index=A01.items.indexOf(item),prev=A01.items[index-1],next=A01.items[index+1];
     $('main').innerHTML=`<a class="backlink" href="#a01">← A01 전체 목차</a><div class="eyebrow">${esc(item.layerLabel)} / ${esc(item.level)}</div><article class="panel prose">${markdown(item.md)}</article><div class="book-nav">${prev?`<a class="button" href="#a01/${prev.id}">← 이전 문서</a>`:'<span></span>'}<a class="button subtle" href="#a01">A01 목차</a>${next?`<a class="button" href="#a01/${next.id}">다음 문서 →</a>`:'<a class="button" href="#book">교재 홈 →</a>'}</div>`;
+  }
+  function courseHome() {
+    const done = id => state.course.read.includes(id);
+    $('main').innerHTML = `<a class="backlink" href="#book">← 교재 홈</a><div class="eyebrow">COURSE / 토목현장 실무</div>
+      <div class="topline"><div><h1>${esc(COURSE.title)}</h1><p class="intro">${esc(COURSE.flow)}</p></div><span class="pill">${COURSE_SECTIONS.length} SECTIONS</span></div>
+      <section class="panel"><h2>순서를 바꾸지 않습니다</h2><p>상황을 통해 개념을 처음 배우면 사례의 답을 외우게 됩니다. 먼저 골격을 만들고, 정상 상태를 익히고, 마지막에 이상을 다룹니다. 정상을 모르는 사람은 이상을 알아볼 수 없습니다.</p><p class="note">수치·물량·기간·금액은 모두 교육용 가정입니다. 검측 명칭, 승인 권한, 통지 기한 같은 절차는 프로젝트마다 다르므로 실제 계약문서에서 확인해야 합니다.</p></section>
+      ${state.course.last?`<a class="backlink" href="#course/${state.course.last}">이어서 읽기 · ${esc(COURSE_SECTIONS.find(x=>x.id===state.course.last)?.title)} →</a>`:''}
+      ${COURSE.chapters.map(ch=>`<section><div class="section-title"><h2>${String(ch.num).padStart(2,'0')} 챕터 ${ch.num} · ${esc(ch.title)}</h2><span>${ch.sections.length?`${ch.sections.filter(s=>done(s.id)).length} / ${ch.sections.length}`:'작성 예정'}</span></div>
+        <p class="note">${esc(ch.lead)} — ${esc(ch.blurb)}</p>
+        ${ch.sections.length?`<div class="chapter-grid">${ch.sections.map(s=>`<a class="chapter" href="#course/${s.id}"><span class="num">${esc(s.id)}</span><div><strong>${esc(s.title)}</strong><small>${done(s.id)?'✓ 읽음':'아직 읽지 않음'}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div>`:'<p class="empty">아직 작성되지 않았습니다. 앞 챕터를 먼저 읽어 주세요.</p>'}</section>`).join('')}`;
+  }
+  function courseSection(id) {
+    const index = COURSE_SECTIONS.findIndex(x=>x.id===id);
+    if (index < 0) { toast('해당 절을 찾지 못해 교재 목차를 표시합니다.'); return courseHome(); }
+    const section = COURSE_SECTIONS[index], prev = COURSE_SECTIONS[index-1], next = COURSE_SECTIONS[index+1];
+    state.course.last = id; save();
+    $('main').innerHTML = `<a class="backlink" href="#course">← 교재 목차</a><div class="eyebrow">챕터 ${section.chapter.num} · ${esc(section.chapter.title)} / ${esc(section.id)}</div>
+      <article class="panel prose">${markdown(section.md)}</article>
+      <button class="button full" data-action="course-read" data-section="${esc(section.id)}">${state.course.read.includes(id)?'✓ 읽은 절':'읽음으로 표시'}</button>
+      <div class="book-nav">${prev?`<a class="button" href="#course/${prev.id}">← ${esc(prev.id)}</a>`:'<span></span>'}<a class="button subtle" href="#course">목차</a>${next?`<a class="button" href="#course/${next.id}">${esc(next.id)} →</a>`:'<a class="button" href="#book">교재 홈 →</a>'}</div>`;
   }
   function bookChapter(id, part = 'story') {
     const b = BOOK.find(x=>x.id===id); if (!b) return bookHome();
@@ -233,9 +260,9 @@
     const parts=(location.hash||'#book').slice(1).split('/');
     routeName=parts[0];routeArg=parts[1]||'';
     const match=/^s([123])$/.exec(routeName);stage=match?Number(match[1]):0;
-    if (!['book','a01','home','s1','s2','s3'].includes(routeName)) { location.replace('#book');return; }
+    if (!['book','a01','course','home','s1','s2','s3'].includes(routeName)) { location.replace('#book');return; }
     $('main').className=stage?'study':'';
-    const activeTab=routeName==='a01'?'book':routeName;
+    const activeTab=routeName==='a01'||routeName==='course'?'book':routeName;
     document.querySelectorAll('#tabs a').forEach(a=>{if(a.dataset.tab===activeTab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     if (stage) {
       if (routeArg) {
@@ -251,10 +278,11 @@
       renderStudy();
     } else if (routeName==='book') { if(routeArg)bookChapter(Number(routeArg),parts[2]);else bookHome(); }
     else if (routeName==='a01') { if(routeArg)a01Document(routeArg);else a01Home(); }
+    else if (routeName==='course') { if(routeArg)courseSection(routeArg);else courseHome(); }
     else home();
     badges(); window.scrollTo(0,0);
     $('main').focus({preventScroll:true});
-    document.title=`${stage?labels[stage]:routeName==='book'?'교재':routeName==='a01'?'A01 Golden Sample':'기록'} | 롯데건설 토목 IM 학습튜터`;
+    document.title=`${stage?labels[stage]:routeName==='book'?'교재':routeName==='a01'?'A01 Golden Sample':routeName==='course'?'토목현장 실무 교재':'기록'} | 롯데건설 토목 IM 학습튜터`;
   }
   function clearRouteArg() { if (routeArg) {history.replaceState(null,'',`#s${stage}`);routeArg='';} }
   function flip() { if(!stage||!sessions[stage].id)return;sessions[stage].back=!sessions[stage].back;renderStudy();window.scrollTo(0,0); }
@@ -279,6 +307,7 @@
     if(action==='practice'){const c=pool(stage).sort((a,b)=>(state.cards[a.id]?.last||0)-(state.cards[b.id]?.last||0))[0];if(c){sessions[stage]={id:c.id,back:false};renderStudy();}}
     if(action==='clear-filters'){state.filters=defaults().filters;save();clearRouteArg();renderStudy();}
     if(action==='read'){const key=Number(button.dataset.chapter)+'/'+button.dataset.part;state.book.read=[...new Set([...state.book.read,key])];save();button.textContent='✓ 읽은 영역';toast('읽음으로 표시했습니다.');}
+    if(action==='course-read'){const id=button.dataset.section;if(COURSE_SECTIONS.some(x=>x.id===id)){state.course.read=[...new Set([...state.course.read,id])];save();button.textContent='✓ 읽은 절';toast('읽음으로 표시했습니다.');}}
     if(action==='reset-ask'){$('reset-confirm').hidden=false;$('reset-confirm').scrollIntoView({block:'center'});}
     if(action==='reset-cancel')$('reset-confirm').hidden=true;
     if(action==='reset-confirm'){state=defaults();[1,2,3].forEach(s=>{sessions[s]={id:null,back:false};});save();home();badges();toast('학습 기록을 초기화했습니다.');}

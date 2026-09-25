@@ -2,11 +2,28 @@
 'use strict';
 const fs=require('node:fs'), path=require('node:path'), vm=require('node:vm'), assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'), context={window:{}};vm.createContext(context);
-for(const name of ['stage1','stage2','cases','book','a01'])vm.runInContext(fs.readFileSync(path.join(root,'data',name+'.js'),'utf8'),context);
-const {STAGE1,STAGE2,CASES,BOOK,A01_GOLDEN}=context.window, all=[...STAGE1,...STAGE2,...CASES];
+for(const name of ['stage1','stage2','cases','book','a01','course'])vm.runInContext(fs.readFileSync(path.join(root,'data',name+'.js'),'utf8'),context);
+const {STAGE1,STAGE2,CASES,BOOK,A01_GOLDEN,COURSE}=context.window, all=[...STAGE1,...STAGE2,...CASES];
 assert(STAGE1.length>=80);assert(STAGE2.length>=100);assert(CASES.length>=30);const curriculum=JSON.parse(fs.readFileSync(path.join(root,'docs/curriculum.json'),'utf8'));assert.equal(BOOK.length,curriculum.length);assert.equal(BOOK.length,18);
 assert.equal(A01_GOLDEN.id,'A01');assert.equal(A01_GOLDEN.status,'Golden Sample');assert.equal(A01_GOLDEN.items.length,18);assert.equal(new Set(A01_GOLDEN.items.map(item=>item.id)).size,18);
 for(const item of A01_GOLDEN.items){assert(/^A01-(?:\d+|D\d{2}|C\d{2})$/.test(item.id),item.id);assert.equal(item.md.trim(),fs.readFileSync(path.join(root,item.file),'utf8').replace(/\n---\n\n\[전체 목차\][^\n]*\n?$/,'').replace(/\n\[전체 목차\][^\n]*\n?$/,'').trim(),`A01 rebuild: ${item.id}`);assert(item.md.length>3000,item.id);}
+// Course: three chapters, unique section IDs, Markdown kept in sync with docs/.
+assert.equal(COURSE.chapters.length,3,'Course chapters');
+assert.equal(COURSE.chapters.map(ch=>ch.id).join(','),'ch1,ch2,ch3');
+const courseSections=COURSE.chapters.flatMap(ch=>ch.sections);
+assert.equal(new Set(courseSections.map(s=>s.id)).size,courseSections.length,'Duplicate course section ID');
+assert.equal(COURSE.chapters[0].sections.length,11,'Chapter 1 sections');
+for(const s of courseSections){
+ assert(s.id&&s.title&&s.file,s.id);
+ assert.equal(s.md.trim(),fs.readFileSync(path.join(root,s.file),'utf8').replace(/\n---\n\n\[[^\]]*목차\][^\n]*\n?$/,'').replace(/\n\[[^\]]*목차\][^\n]*\n?$/,'').trim(),`Course rebuild: ${s.id}`);
+ assert.equal((s.md.match(/^```/gm)||[]).length%2,0,`Unclosed fence: ${s.id}`);
+ assert(!s.md.includes('[챕터'),`Navigation leaked into web copy: ${s.id}`);
+ assert(s.md.length>2000,`Too short: ${s.id}`);
+}
+// Chapter 1 is the concept layer: no dated, named, site-specific role play.
+for(const s of COURSE.chapters[0].sections){
+ assert(!/B2 BOX|안재영|\d{4}년 \d{1,2}월 \d{1,2}일|월요일 \d{2}:\d{2}/.test(s.md),`Scenario leaked into concept layer: ${s.id}`);
+}
 assert.equal(new Set(all.map(c=>c.id)).size,all.length,'Duplicate IDs');
 assert.equal(new Set([...STAGE1,...STAGE2].map(c=>c.q)).size,STAGE1.length+STAGE2.length,'Duplicate questions');
 const cats=['공사','공무','공정','원가','품질·안전','현장리스크'], fields=['토공','지반','구조','도로','교량','터널','도심지','종합'];
@@ -77,4 +94,5 @@ for(const file of [path.join(root,'README.md'),path.join(root,'AUTHORING_GUIDE.m
 }
 for(const text of ['4,500','55%','18개월'])assert(CASES[0].background.includes(text));
 for(const text of ['2배','2개월','7%','80억','1.5개월'])assert(CASES[0].issues.join(' ').includes(text));
+console.log(`COURSE: ${COURSE.chapters.map(ch=>ch.id+':'+ch.sections.length).join(' ')}`);
 console.log(`PASS: ${STAGE1.length} basic / ${STAGE2.length} domain / ${CASES.length} cases / ${BOOK.length} chapters / ${A01_GOLDEN.items.length} A01 documents; IDs, schemas, lengths, coverage, web sync.`);
