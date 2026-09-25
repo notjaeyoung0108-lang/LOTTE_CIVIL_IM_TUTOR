@@ -65,6 +65,7 @@ index.html / app.js / style.css
  docs/REBUILD_DESIGN.md  원재료 분석·목차·성장·Map
  reference/             용어·약어·도면·기술 검증
  docs/CURRICULUM_STRUCTURE.md  3챕터 교재 전체 구조
+ docs/COURSE_AUTHORING.md      교재 집필 지시사항 (이어쓰기용)
  docs/ch1-flow/         챕터 1 기본 Flow 원문
  docs/ch2-normal/       챕터 2 공종별 정상 순서 원문
  docs/ch3-problem/      챕터 3 판단문제 원문
