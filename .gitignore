@@ -12,3 +12,5 @@ __pycache__/
 # API call payloads and full reviewer traces are local evidence, not source material.
 # Keep only the curated curriculum, published lessons, manual-review specs, and REPORTs.
 /docs/**/audit/
+# A02 파일럿의 미승인 Curriculum Architect 출력은 로컬 검토용이다.
+/docs/a02/curriculum.json

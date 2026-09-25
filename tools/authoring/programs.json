@@ -1,0 +1,48 @@
+{
+  "A01": {
+    "title": "공정계획 수립",
+    "prompt_version": "a01-v1",
+    "chapter_titles": [
+      "공정계획 담당자는 실제로 무슨 일을 하는가",
+      "도면에서 작업구간과 WBS를 어떻게 나누는가",
+      "Activity는 어떻게 정의하는가",
+      "물량·Crew·생산성으로 Duration을 어떻게 산정하는가",
+      "실제 시공순서와 선후관계를 어떻게 만드는가",
+      "승인·자재·장비·작업면·검측 Constraint를 어떻게 관리하는가",
+      "Master → 월간 → Look Ahead → 일일계획은 어떻게 연결되는가",
+      "파트너사 및 관계부서와 계획을 어떻게 조정하는가",
+      "계획과 실제가 달라졌을 때 어떻게 갱신하고 재계획하는가"
+    ],
+    "drill_titles": [
+      "Shop DWG 승인 지연", "생산성 가정 오류", "크레인 중복배차", "작업면 미확보",
+      "자재납기와 공정 충돌", "검측 일정 누락", "Crew 추가투입 판단", "물량 증가 후 Duration 미갱신"
+    ],
+    "case_title": "금요일 타설 그대로 갈 수 있습니까?",
+    "sources": ["AUTHORING_GUIDE.md", "docs/REBUILD_DESIGN.md", "docs/part_b/14.md", "reference/현장용어집.md"],
+    "representative_site": "가상 도심 지하차도 B2 BOX 구조물",
+    "legacy_reference": "docs/part_b/14.md"
+  },
+  "A02": {
+    "title": "현장 자원 투입계획 수립",
+    "prompt_version": "a02-v2",
+    "chapter_titles": [
+      "현장 자원 투입계획 담당자는 무엇을 결정하는가",
+      "Look Ahead와 WBS에서 날짜별 수요를 어떻게 읽는가",
+      "인원·장비·자재의 가용 근거를 어떻게 확인하는가",
+      "Crew 구성과 생산성 가정을 어떻게 투입표로 바꾸는가",
+      "장비 배차와 작업면을 어떻게 함께 맞추는가",
+      "자재 반입·보관·양중 조건을 어떻게 투입계획에 반영하는가",
+      "일일·주간 자원 투입표의 Constraint를 어떻게 조정하는가",
+      "투입 차질이 생기면 어떤 순서로 재배치·보고하는가",
+      "실적을 반영해 다음 투입계획을 어떻게 갱신하는가"
+    ],
+    "drill_titles": [
+      "Crew 출역 부족과 목표 물량", "공유 장비 배차 충돌", "반입 시간과 양중 슬롯", "작업면 미인계 상태의 증원 판단",
+      "타 구간 인원 전환", "주간 자재 재고와 납기", "반일 실적 미달 후 다음날 투입", "자원 변경의 공정·원가 영향"
+    ],
+    "case_title": "금요일 타설 전, 자원 투입표를 확정할 수 있습니까?",
+    "sources": ["AUTHORING_GUIDE.md", "docs/FIELD_REDESIGN.md", "docs/field/tasks/C06.md", "docs/field/tasks/A01.md", "docs/field/tasks/A05.md", "docs/part_b/14.md", "reference/현장용어집.md"],
+    "representative_site": "가상 지방도 확장공사 배수로 기초·측구 설치 구간",
+    "legacy_reference": "docs/part_b/14.md"
+  }
+}

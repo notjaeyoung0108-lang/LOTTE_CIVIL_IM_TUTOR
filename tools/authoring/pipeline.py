@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A01 authoring: explicit contexts, structured reviews, fail-closed publishing."""
+"""Golden-sample-calibrated authoring with fail-closed publishing."""
 from __future__ import annotations
 import argparse
 import ast
@@ -23,9 +23,24 @@ HOME = Path(__file__).resolve().parent
 OUT = ROOT / 'docs/a01'
 CACHE = ROOT / '.authoring-cache'
 CONFIG = json.loads((HOME / 'config.json').read_text())
-TITLES = ['공정계획 담당자는 실제로 무슨 일을 하는가', '도면에서 작업구간과 WBS를 어떻게 나누는가', 'Activity는 어떻게 정의하는가', '물량·Crew·생산성으로 Duration을 어떻게 산정하는가', '실제 시공순서와 선후관계를 어떻게 만드는가', '승인·자재·장비·작업면·검측 Constraint를 어떻게 관리하는가', 'Master → 월간 → Look Ahead → 일일계획은 어떻게 연결되는가', '파트너사 및 관계부서와 계획을 어떻게 조정하는가', '계획과 실제가 달라졌을 때 어떻게 갱신하고 재계획하는가']
-DRILLS = ['Shop DWG 승인 지연', '생산성 가정 오류', '크레인 중복배차', '작업면 미확보', '자재납기와 공정 충돌', '검측 일정 누락', 'Crew 추가투입 판단', '물량 증가 후 Duration 미갱신']
-SOURCES = ['AUTHORING_GUIDE.md', 'docs/REBUILD_DESIGN.md', 'docs/part_b/14.md', 'reference/현장용어집.md']
+PROGRAMS = json.loads((HOME / 'programs.json').read_text())
+PROGRAM_ID = 'A01'
+PROGRAM = PROGRAMS[PROGRAM_ID]
+TITLES = PROGRAM['chapter_titles']
+DRILLS = PROGRAM['drill_titles']
+SOURCES = PROGRAM['sources']
+
+def select_program(program_id):
+    """Switch only by an explicit program ID; never infer repository files."""
+    global PROGRAM_ID, PROGRAM, OUT, TITLES, DRILLS, SOURCES
+    if program_id not in PROGRAMS:
+        raise ValueError(f'unknown program: {program_id}')
+    PROGRAM_ID = program_id
+    PROGRAM = PROGRAMS[program_id]
+    OUT = ROOT / 'docs' / program_id.lower()
+    TITLES = PROGRAM['chapter_titles']
+    DRILLS = PROGRAM['drill_titles']
+    SOURCES = PROGRAM['sources']
 
 class Strict(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -71,6 +86,17 @@ class Review(Strict):
     revision_requests: list[str]
     passed: bool = Field(alias='pass')
 
+class ComparativeReview(Strict):
+    compared_with: str
+    detail_depth: int = Field(ge=1, le=5)
+    field_realism: int = Field(ge=1, le=5)
+    question_generation: int = Field(ge=1, le=5)
+    procedural_specificity: int = Field(ge=1, le=5)
+    overall_parity: bool
+    findings: list[str]
+    critical_issues: list[str]
+    revision_requests: list[str]
+
 SCORES = ['field_depth', 'procedural_specificity', 'question_generation', 'numerical_consistency', 'field_language', 'pedagogical_clarity', 'cross_function_connection']
 
 def dump(value):
@@ -90,6 +116,9 @@ def now():
 
 def passed(review):
     return review.passed and all(getattr(review, k) >= 4 for k in SCORES) and review.unsupported_claim_risk == 1 and not (review.numerical_issues or review.critical_issues or review.unsupported_claims)
+
+def comparative_passed(review):
+    return review.overall_parity and all(getattr(review, key) >= 4 for key in ('detail_depth', 'field_realism', 'question_generation', 'procedural_specificity')) and not review.critical_issues
 
 def evaluate(expression):
     """Tiny arithmetic language; never execute LLM-provided code."""
@@ -132,11 +161,40 @@ def contexts():
     # Deliberate allowlist: never glob the repository or include .env.
     return {p: (ROOT / p).read_text(encoding='utf-8') for p in SOURCES}
 
+def golden_reference(kind):
+    """Small, selected references: calibration, never a wholesale A01 dump."""
+    paths = {
+        'writer': ROOT / 'docs/a01/layer1/A01-7.md',
+        'scenario': ROOT / 'docs/a01/layer2/A01-D07.md',
+        'case': ROOT / 'docs/a01/layer3/A01-C01.md',
+    }
+    path = paths[kind]
+    text = path.read_text(encoding='utf-8')
+    # The selected document is bounded so a long CASE cannot dominate the task context.
+    excerpt = text[:3200]
+    return {
+        'reference_id': f'A01 Golden Sample — {path.stem}',
+        'purpose': '내용 복제가 아닌 설명 밀도·현장성·질문 생성·조건부 판단의 품질 calibration',
+        'rules': [
+            '사실, 수치, 사건, 고유 문장 및 사례를 복사하지 않는다.',
+            '새 업무의 도메인에 맞는 새로운 교육용 예제와 자료를 사용한다.',
+            'Golden Sample보다 설명 밀도를 낮추지 않는다.'
+        ],
+        # A short excerpt is evidence of the desired writing standard, not a source
+        # case to imitate.  Full A01 context previously encouraged scenario leakage.
+        'sample_excerpt': excerpt,
+        'truncated': len(text) > len(excerpt),
+        'do_not_reuse': {
+            'site_or_story': 'A01의 B2 BOX, 날짜·작업달력, Crew 수, 수치, 병목 사건, 문장 구조를 새 업무에 재사용하지 않는다.',
+            'required_difference': '새 업무는 별도 현장 배경·작업 대상·시간축·자원 조합·판단 사건으로 설계한다.'
+        },
+    }
+
 def settings(role):
     return {'model': os.getenv(f'AUTHORING_MODEL_{role.upper()}', os.getenv('AUTHORING_MODEL', CONFIG['default_model'])), 'reasoning': os.getenv(f'AUTHORING_REASONING_{role.upper()}', CONFIG['roles'][role])}
 
 def signature():
-    return {'config': CONFIG, 'roles': {r: settings(r) for r in CONFIG['roles']}, 'prompts': {p.name: p.read_text() for p in sorted((HOME / 'prompts').glob('*.md'))}, 'engine': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    return {'program': PROGRAM_ID, 'program_spec': PROGRAM, 'config': CONFIG, 'roles': {r: settings(r) for r in CONFIG['roles']}, 'prompts': {p.name: p.read_text() for p in sorted((HOME / 'prompts').glob('*.md'))}, 'engine': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
 
 class Runner:
     def __init__(self):
@@ -150,7 +208,7 @@ class Runner:
         conf = settings(role)
         prompt = (HOME / 'prompts/common.md').read_text() + '\n' + (HOME / f'prompts/{role}.md').read_text()
         prompt += '\n계산 expression은 숫자와 + - * / 괄호 및 min/max/ceil만 사용한다. 날짜는 본문에서 달력을 명시하고 경과 작업일로 환산해 검증한다. Python 코드나 변수는 쓰지 않는다.'
-        request = {'role': role, 'item': item, 'payload': payload, 'prompt': prompt, 'version': CONFIG['prompt_version'], 'settings': conf, 'schema': schema.model_json_schema(), 'max_output_tokens': CONFIG['max_output_tokens']}
+        request = {'program': PROGRAM_ID, 'role': role, 'item': item, 'payload': payload, 'prompt': prompt, 'version': PROGRAM['prompt_version'], 'settings': conf, 'schema': schema.model_json_schema(), 'max_output_tokens': CONFIG['max_output_tokens']}
         key = digest(request)
         record_path = CACHE / 'calls' / f'{key}.json'
         if record_path.exists():
@@ -166,16 +224,16 @@ class Runner:
         if response.status != 'completed' or response.output_parsed is None:
             raise RuntimeError(f'{role}: incomplete/refused response; not publishable')
         result = response.output_parsed
-        record = {'chapter_id': item, 'role': role, 'model': conf['model'], 'reasoning': conf['reasoning'], 'prompt_version': CONFIG['prompt_version'], 'context_hash': digest(payload), 'request_hash': key, 'created_at': now(), 'response_id': response.id, 'usage': response.usage.model_dump() if response.usage else {}, 'output': result.model_dump(by_alias=True)}
+        record = {'program': PROGRAM_ID, 'chapter_id': item, 'role': role, 'model': conf['model'], 'reasoning': conf['reasoning'], 'prompt_version': PROGRAM['prompt_version'], 'context_hash': digest(payload), 'request_hash': key, 'created_at': now(), 'response_id': response.id, 'usage': response.usage.model_dump() if response.usage else {}, 'output': result.model_dump(by_alias=True)}
         save(record_path, record)
         save(OUT / 'audit/calls' / f'{key}.json', record)
         return result
 
     def curriculum(self):
-        payload = {'proposal': [{'id': f'A01-{i}', 'title': t} for i, t in enumerate(TITLES, 1)], 'references': contexts()}
-        result = self.call('curriculum', 'A01', payload, Curriculum)
-        if [x.id for x in result.chapters] != [f'A01-{i}' for i in range(1, 10)]:
-            raise RuntimeError('Curriculum IDs/order must match A01-1..9')
+        payload = {'program': PROGRAM_ID, 'task_title': PROGRAM['title'], 'proposal': [{'id': f'{PROGRAM_ID}-{i}', 'title': t} for i, t in enumerate(TITLES, 1)], 'references': contexts()}
+        result = self.call('curriculum', PROGRAM_ID, payload, Curriculum)
+        if [x.id for x in result.chapters] != [f'{PROGRAM_ID}-{i}' for i in range(1, len(TITLES) + 1)]:
+            raise RuntimeError(f'Curriculum IDs/order must match {PROGRAM_ID}-1..{len(TITLES)}')
         save(OUT / 'curriculum.json', result.model_dump())
         return result
 
@@ -185,6 +243,18 @@ class Runner:
         with ThreadPoolExecutor(max_workers=3) as pool:
             results = list(pool.map(lambda role: self.call(role, item, payload, Review), roles))
         return dict(zip(roles, results))
+
+    def comparative_review(self, item, draft, context):
+        if PROGRAM_ID != 'A02':
+            return None
+        payload = {
+            'program': PROGRAM_ID,
+            'candidate_id': item,
+            'candidate_draft': draft.model_dump(),
+            'golden_sample': golden_reference('writer'),
+            'comparison_focus': '내용이 아니라 깊이·현장성·질문 생성·절차 구체성'
+        }
+        return self.call('golden_sample_reviewer', item, payload, ComparativeReview)
 
     def generate(self, item, context, kind='chapter', force_review=False, initial_draft=None, manual_note=None):
         minimum = 1500 if kind == 'drill' else 3000
@@ -228,17 +298,21 @@ class Runner:
                 if accepted and len(draft.markdown) < 0.9 * len(accepted.markdown):
                     issues.append('Chief Editor가 통과 원고를 10% 초과 축약함')
                 reviews = self.reviews(item, draft, context, accepted)
+                comparison = self.comparative_review(item, draft, context) if kind == 'chapter' else None
                 entry = {'stage': stage, 'revision': status['revision_count'], 'local_issues': issues, 'reviews': {k: v.model_dump(by_alias=True) for k, v in reviews.items()}, 'draft': draft.model_dump()}
+                if comparison:
+                    entry['golden_sample_comparison'] = comparison.model_dump()
                 status['history'].append(entry)
                 save(status_path, status)
-                good = not issues and all(passed(v) for v in reviews.values())
+                good = not issues and all(passed(v) for v in reviews.values()) and (comparison is None or comparative_passed(comparison))
                 if good and stage == 'draft':
                     accepted = draft
                     draft = self.call('chief_editor', item, {'context': context, 'approved_draft': draft.model_dump()}, Draft)
                     stage = 'edited'
                     continue
                 if good:
-                    body = draft.markdown.rstrip() + '\n\n[전체 목차](../README.md) · [기존 CASE 14](../../part_b/14.md)\n'
+                    legacy = Path(PROGRAM['legacy_reference']).name
+                    body = draft.markdown.rstrip() + f'\n\n[전체 목차](../README.md) · [기존 CASE 14](../../part_b/{legacy})\n'
                     save(target, body)
                     status.update(status='pass', final_draft=draft.model_dump(), published_hash=digest(body), completed_at=now())
                     save(status_path, status)
@@ -257,30 +331,38 @@ class Runner:
             raise
 
     def chapter_context(self, chapter, curriculum):
-        return {'chapter': chapter.model_dump(), 'curriculum': curriculum.model_dump(), 'layer': 1, 'level': [1, 2], 'representative_site': '가상 도심 지하차도 B2 BOX 구조물', 'references': contexts()}
+        reference = {'sources': contexts()}
+        if PROGRAM_ID != 'A01':
+            reference['golden_sample'] = golden_reference('writer')
+        return {'program': PROGRAM_ID, 'chapter': chapter.model_dump(), 'curriculum': curriculum.model_dump(), 'layer': 1, 'level': [1, 2], 'representative_site': PROGRAM['representative_site'], 'references': reference}
 
     def layer1(self):
-        paths = [OUT / 'layer1' / f'A01-{i}.md' for i in range(1, 10)]
+        paths = [OUT / 'layer1' / f'{PROGRAM_ID}-{i}.md' for i in range(1, len(TITLES) + 1)]
         for p in paths:
             status = OUT / 'audit' / f'{p.stem}.json'
             data = json.loads(status.read_text()) if status.exists() else {}
             if not p.exists() or data.get('status') != 'pass' or data.get('published_hash') != digest(p.read_text()):
-                raise RuntimeError('Layer 1의 9개 챕터가 모두 PASS여야 문제 생성 가능')
+                raise RuntimeError(f'Layer 1의 {len(TITLES)}개 챕터가 모두 PASS여야 문제 생성 가능')
         return {p.stem: p.read_text() for p in paths}
 
     def scenario_context(self, item, title, kind):
         source = self.layer1()
         related = {1: [3, 6], 2: [4, 9], 3: [5, 8], 4: [2, 6], 5: [5, 6], 6: [3, 6], 7: [4, 8], 8: [4, 9]}
         if kind == 'drill':
-            source = {f'A01-{n}': source[f'A01-{n}'] for n in related[int(item.split('D')[1])]}
-        return {'id': item, 'title': title, 'kind': kind, 'layer1': source, 'references': {'CASE14': (ROOT / 'docs/part_b/14.md').read_text()}, 'focus': '단위 판단 1~2개' if kind == 'drill' else '금요일 타설 가능 여부, 타 구간 Float와 자원 이동, 추가비·회피가능원가·EAC, 조건부 결정'}
+            source = {f'{PROGRAM_ID}-{n}': source[f'{PROGRAM_ID}-{n}'] for n in related[int(item.split('D')[1])]}
+        references = {'CASE14': (ROOT / PROGRAM['legacy_reference']).read_text()}
+        if PROGRAM_ID != 'A01':
+            references['golden_sample'] = golden_reference('scenario' if kind == 'drill' else 'case')
+        return {'program': PROGRAM_ID, 'id': item, 'title': title, 'kind': kind, 'layer1': source, 'references': references, 'focus': '단위 판단 1~2개' if kind == 'drill' else '공정·인원·장비·자재·품질·파트너사·원가를 최소 세 개 이상 연결하는 조건부 판단'}
 
     def scenario(self, item, title, kind):
         return self.generate(item, self.scenario_context(item, title, kind), kind)
 
 def index():
-    lines = ['# A01 — 공정계획 수립', '', '현장상황 → 질문 → 정보 수집 → 분석 → 판단 → 실행 → 재확인', '', '검수와 최종 편집 검수를 모두 통과한 문서만 연결합니다. 생성 전·검수 미완료 문서는 대기 상태입니다.', '']
-    for folder, title, items in [('layer1', 'Layer 1 · Level 1~2 수행업무 실무지식', [(f'A01-{i}', t) for i, t in enumerate(TITLES, 1)]), ('layer2', 'Layer 2 · Level 3 단위 판단', [(f'A01-D{i:02}', t) for i, t in enumerate(DRILLS, 1)]), ('layer3', 'Layer 3 · Level 4 통합 CASE', [('A01-C01', '금요일 타설 그대로 갈 수 있습니까?')])]:
+    lines = [f'# {PROGRAM_ID} — {PROGRAM["title"]}', '', '현장상황 → 질문 → 정보 수집 → 분석 → 판단 → 실행 → 재확인', '', '검수와 최종 편집 검수를 모두 통과한 문서만 연결합니다. 생성 전·검수 미완료 문서는 대기 상태입니다.', '']
+    if PROGRAM_ID != 'A01':
+        lines += ['A01 Golden Sample은 내용 복제본이 아니라 설명 밀도·현장성·질문 생성·절차 구체성의 비교 기준입니다.', '']
+    for folder, title, items in [('layer1', 'Layer 1 · Level 1~2 수행업무 실무지식', [(f'{PROGRAM_ID}-{i}', t) for i, t in enumerate(TITLES, 1)]), ('layer2', 'Layer 2 · Level 3 단위 판단', [(f'{PROGRAM_ID}-D{i:02}', t) for i, t in enumerate(DRILLS, 1)]), ('layer3', 'Layer 3 · Level 4 통합 CASE', [(f'{PROGRAM_ID}-C01', PROGRAM['case_title'])])]:
         lines += [f'## {title}', '']
         for item, label in items:
             path = OUT / folder / f'{item}.md'
@@ -289,7 +371,7 @@ def index():
             ok = path.exists() and state.get('status') == 'pass' and state.get('published_hash') == digest(path.read_text())
             lines.append(f'- [{item}. {label}]({folder}/{item}.md)' if ok else f'- {item}. {label} — {state.get("status", "대기")}')
         lines.append('')
-    lines += ['[기존 CASE 14](../part_b/14.md) · [기존 교재](../../README.md) · [설계안](DESIGN.md) · [실행 방법](../../tools/authoring/README.md)', '']
+    lines += ['[A01 Golden Sample](../a01/README.md) · [기존 CASE 14](../part_b/14.md) · [기존 교재](../../README.md) · [실행 방법](../../tools/authoring/README.md)', '']
     save(OUT / 'README.md', '\n'.join(lines))
 
 def main():
@@ -299,12 +381,18 @@ def main():
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--workers', type=int, choices=range(1, 5), default=1, help='Pilot PASS 이후 독립 챕터 API 동시 실행 수')
     args = parser.parse_args()
-    if args.target != 'A01' and args.target not in [f'A01-{i}' for i in range(1, 10)]:
-        parser.error('현재 Pilot은 A01 또는 A01-1..9만 지원합니다.')
-    if args.command in ('generate-drills', 'generate-case', 'curriculum', 'index') and args.target != 'A01':
-        parser.error('이 명령은 A01 전체를 대상으로 합니다.')
+    program_id = args.target.split('-')[0]
+    try:
+        select_program(program_id)
+    except ValueError as exc:
+        parser.error(str(exc))
+    valid_chapters = [f'{PROGRAM_ID}-{i}' for i in range(1, len(TITLES) + 1)]
+    if args.target != PROGRAM_ID and args.target not in valid_chapters:
+        parser.error(f'{PROGRAM_ID} 또는 {PROGRAM_ID}-1..{len(TITLES)}만 지원합니다.')
+    if args.command in ('generate-drills', 'generate-case', 'curriculum', 'index') and args.target != PROGRAM_ID:
+        parser.error(f'이 명령은 {PROGRAM_ID} 전체를 대상으로 합니다.')
     if args.dry_run:
-        print(dump({'command': args.command, 'target': args.target, 'sources': SOURCES, 'roles': {r: settings(r) for r in CONFIG['roles']}, 'pilot_first': 'A01-4', 'max_revision': int(os.getenv('MAX_REVISION', str(CONFIG['max_revision']))), 'network_calls': 0, 'writes': 0}))
+        print(dump({'command': args.command, 'target': args.target, 'program': PROGRAM, 'sources': SOURCES, 'roles': {r: settings(r) for r in CONFIG['roles']}, 'pilot_first': f'{PROGRAM_ID}-4', 'max_revision': int(os.getenv('MAX_REVISION', str(CONFIG['max_revision']))), 'network_calls': 0, 'writes': 0}))
         return 0
     if args.command == 'index':
         index()
@@ -315,7 +403,7 @@ def main():
         if args.command in ('generate', 'review', 'curriculum'):
             curriculum = runner.curriculum()
             if args.command != 'curriculum':
-                ids = ['A01-4'] + [f'A01-{i}' for i in range(1, 10) if i != 4] if args.target == 'A01' else [args.target]
+                ids = [f'{PROGRAM_ID}-4'] + [f'{PROGRAM_ID}-{i}' for i in range(1, len(TITLES) + 1) if i != 4] if args.target == PROGRAM_ID else [args.target]
                 def generate_one(item):
                     chapter = next(c for c in curriculum.chapters if c.id == item)
                     return runner.generate(item, runner.chapter_context(chapter, curriculum), force_review=args.command == 'review')
@@ -331,11 +419,11 @@ def main():
                             success = all(list(pool.map(generate_one, ids[1:])))
         elif args.command == 'generate-drills':
             for i, title in enumerate(DRILLS, 1):
-                if not runner.scenario(f'A01-D{i:02}', title, 'drill'):
+                if not runner.scenario(f'{PROGRAM_ID}-D{i:02}', title, 'drill'):
                     success = False
                     break
         elif args.command == 'generate-case':
-            success = runner.scenario('A01-C01', '금요일 타설 그대로 갈 수 있습니까?', 'case')
+            success = runner.scenario(f'{PROGRAM_ID}-C01', PROGRAM['case_title'], 'case')
     finally:
         index()
     return 0 if success else 2

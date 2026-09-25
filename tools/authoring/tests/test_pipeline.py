@@ -2,7 +2,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from pipeline import Review, Draft, Calculation, passed, evaluate, validate_draft
+from pipeline import Review, ComparativeReview, Draft, Calculation, passed, comparative_passed, evaluate, validate_draft
 
 class Gates(unittest.TestCase):
     def review(self, **changes):
@@ -14,6 +14,14 @@ class Gates(unittest.TestCase):
         self.assertTrue(passed(self.review()))
         for changes in [{'critical_issues':['unsafe']}, {'numerical_issues':['wrong duration']}, {'unsupported_claims':['company rule']}, {'procedural_specificity':3}, {'unsupported_claim_risk':2}, {'pass':False}]:
             self.assertFalse(passed(self.review(**changes)))
+
+    def test_golden_parity_is_a_separate_fail_closed_gate(self):
+        base = dict(compared_with='A01 Golden Sample', detail_depth=4, field_realism=4, question_generation=4, procedural_specificity=4, overall_parity=True, findings=[], critical_issues=[], revision_requests=[])
+        self.assertTrue(comparative_passed(ComparativeReview.model_validate(base)))
+        for changes in ({'overall_parity': False}, {'detail_depth': 3}, {'critical_issues': ['copied case']}):
+            value = dict(base)
+            value.update(changes)
+            self.assertFalse(comparative_passed(ComparativeReview.model_validate(value)))
 
     def test_arithmetic_and_resource_examples(self):
         self.assertEqual(evaluate('12 / 3'), 4)
@@ -77,6 +85,20 @@ class Workflow(unittest.TestCase):
                 self.assertFalse((p.OUT/'layer1/A01-4.md').exists())
 
 class Operations(unittest.TestCase):
+    def test_a02_uses_a_short_quality_reference_and_distinct_site(self):
+        import pipeline as p
+        original = p.PROGRAM_ID
+        try:
+            p.select_program('A02')
+            reference = p.golden_reference('writer')
+            self.assertIn('sample_excerpt', reference)
+            self.assertNotIn('sample', reference)
+            self.assertLessEqual(len(reference['sample_excerpt']), 3200)
+            self.assertIn('재사용하지 않는다', reference['do_not_reuse']['site_or_story'])
+            self.assertNotIn('B2 BOX', p.PROGRAM['representative_site'])
+        finally:
+            p.select_program(original)
+
     def test_api_key_priority_and_missing_key(self):
         import pipeline as p
         from unittest.mock import patch
