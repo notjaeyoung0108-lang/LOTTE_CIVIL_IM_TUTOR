@@ -35,21 +35,24 @@ vm.runInContext(fs.readFileSync('app.js','utf8'),sandbox);
 const show=hash=>{ sandbox.location.hash=hash; handlers.forEach(fn=>fn()); return mainHtml.value; };
 
 // route() already ran on load with #course.
+const COURSE_CHAPTERS=sandbox.window.COURSE.chapters;
 let html=mainHtml.value;
 assert(html.includes('토목현장 실무 교재'),'course home title');
 assert(html.includes('챕터 1 · 기본 Flow'),'chapter 1 heading');
 assert(html.includes('챕터 3 · 문제풀이'),'chapter 3 heading');
 assert(html.includes('href="#course/1-0"'),'section link');
 assert(html.includes('href="#course/1-10"'),'last section link');
-assert(html.includes('작성 예정'),'empty chapter marker');
+const empty=COURSE_CHAPTERS.filter(ch=>!ch.sections.length);
+assert.equal(html.includes('작성 예정'),empty.length>0,'pending marker must match empty chapters');
 assert(!/undefined|\[object Object\]|NaN/.test(html),'placeholder leak in course home');
 const links=[...html.matchAll(/href="#course\/([^"]+)"/g)].map(m=>m[1]);
-assert.equal(links.length,11,'11 section links, got '+links.length);
-console.log('교재 목차 렌더링 OK · 절 링크 '+links.length+'개 · 빈 챕터 표시 OK');
+const total=COURSE_CHAPTERS.reduce((n,ch)=>n+ch.sections.length,0);
+assert.equal(links.length,total,total+' section links, got '+links.length);
+console.log('교재 목차 렌더링 OK · 절 링크 '+links.length+'개 · 빈 챕터 '+empty.length+'개 표시 정합');
 console.log('  링크 순서:',links.join(', '));
 
 // Section reader
-for (const id of ['1-0','1-5','1-10']) {
+for (const id of ['1-0','1-5','1-10','2-D-1','3-01','3-05']) {
   const body = show('#course/'+id);
   assert(body.includes('article class=\"panel prose\"'),'prose article '+id);
   assert(body.includes('data-action=\"course-read\"'),'read button '+id);
@@ -68,5 +71,5 @@ const home = show('#book');
 assert(home.includes('class=\"course-entry\"'),'course entry card');
 assert(home.includes('COURSE · 토목현장 실무 교재'),'course kicker');
 assert.equal((home.match(/class=\"golden-entry\"/g)||[]).length,1,'A01 golden entry must stay unique');
-assert(home.includes('11개 절'),'section count');
+assert(home.includes(total+'개 절'),'section count');
 console.log('교재 홈 진입 카드 OK · golden-entry 는 여전히 1개(A01 QA 호환)');
