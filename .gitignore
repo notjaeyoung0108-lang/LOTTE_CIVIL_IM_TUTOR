@@ -6,3 +6,9 @@ node_modules/
 playwright-report/
 test-results/
 *.log
+__pycache__/
+.venv/
+.authoring-cache/
+# API call payloads and full reviewer traces are local evidence, not source material.
+# Keep only the curated curriculum, published lessons, manual-review specs, and REPORTs.
+/docs/**/audit/

@@ -1,0 +1,15 @@
+{
+  "prompt_version": "a01-v1",
+  "default_model": "gpt-5.6-sol",
+  "max_revision": 3,
+  "max_output_tokens": 16000,
+  "roles": {
+    "curriculum": "high",
+    "field_writer": "high",
+    "scenario_designer": "high",
+    "quantitative_reviewer": "high",
+    "field_reviewer": "high",
+    "pedagogy_reviewer": "high",
+    "chief_editor": "medium"
+  }
+}

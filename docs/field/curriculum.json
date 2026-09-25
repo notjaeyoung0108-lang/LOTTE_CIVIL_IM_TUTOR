@@ -1,0 +1,51 @@
+{
+  "edition": "field-2026-09",
+  "tasks": [
+    {
+      "id": "C06",
+      "title": "인원 투입계획 / 인적자원관리",
+      "group": "시공 전 관리",
+      "file": "tasks/C06.md",
+      "chapter": 14,
+      "cases": [
+        "F01",
+        "F02"
+      ]
+    },
+    {
+      "id": "A01",
+      "title": "현장공사 시공계획 및 추진계획 수립 / 공정계획 수립",
+      "group": "토목현장 운영 및 관리",
+      "file": "tasks/A01.md",
+      "chapter": 14,
+      "cases": [
+        "F02",
+        "F04"
+      ]
+    },
+    {
+      "id": "A05",
+      "title": "공정관리",
+      "group": "토목현장 운영 및 관리",
+      "file": "tasks/A05.md",
+      "chapter": 14,
+      "cases": [
+        "F01",
+        "F02",
+        "F03"
+      ]
+    },
+    {
+      "id": "B01",
+      "title": "실행예산 관리 / 원가관리",
+      "group": "프로젝트 관리",
+      "file": "tasks/B01.md",
+      "chapter": 16,
+      "cases": [
+        "F03",
+        "F08"
+      ]
+    }
+  ],
+  "cases": []
+}

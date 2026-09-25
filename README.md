@@ -12,6 +12,8 @@
 - [현장용어집](reference/현장용어집.md) · [약어집](reference/약어집.md) · [도면 읽기](reference/도면읽기.md)
 - [기술 검증 범위와 추가 확인](reference/기술검증.md)
 - [전면 개편 완료보고](docs/REBUILD_REPORT.md)
+- [A01 공정계획 실무 교과과정 — 세부챕터·단위판단·통합 CASE](docs/a01/README.md)
+- [GPT API 집필·검수 파이프라인 실행 방법](tools/authoring/README.md)
 
 ## 전체 목차
 
