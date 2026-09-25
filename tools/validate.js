@@ -2,9 +2,11 @@
 'use strict';
 const fs=require('node:fs'), path=require('node:path'), vm=require('node:vm'), assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'), context={window:{}};vm.createContext(context);
-for(const name of ['stage1','stage2','cases','book'])vm.runInContext(fs.readFileSync(path.join(root,'data',name+'.js'),'utf8'),context);
-const {STAGE1,STAGE2,CASES,BOOK}=context.window, all=[...STAGE1,...STAGE2,...CASES];
+for(const name of ['stage1','stage2','cases','book','a01'])vm.runInContext(fs.readFileSync(path.join(root,'data',name+'.js'),'utf8'),context);
+const {STAGE1,STAGE2,CASES,BOOK,A01_GOLDEN}=context.window, all=[...STAGE1,...STAGE2,...CASES];
 assert(STAGE1.length>=80);assert(STAGE2.length>=100);assert(CASES.length>=30);const curriculum=JSON.parse(fs.readFileSync(path.join(root,'docs/curriculum.json'),'utf8'));assert.equal(BOOK.length,curriculum.length);assert.equal(BOOK.length,18);
+assert.equal(A01_GOLDEN.id,'A01');assert.equal(A01_GOLDEN.status,'Golden Sample');assert.equal(A01_GOLDEN.items.length,18);assert.equal(new Set(A01_GOLDEN.items.map(item=>item.id)).size,18);
+for(const item of A01_GOLDEN.items){assert(/^A01-(?:\d+|D\d{2}|C\d{2})$/.test(item.id),item.id);assert.equal(item.md.trim(),fs.readFileSync(path.join(root,item.file),'utf8').replace(/\n---\n\n\[전체 목차\][^\n]*\n?$/,'').replace(/\n\[전체 목차\][^\n]*\n?$/,'').trim(),`A01 rebuild: ${item.id}`);assert(item.md.length>3000,item.id);}
 assert.equal(new Set(all.map(c=>c.id)).size,all.length,'Duplicate IDs');
 assert.equal(new Set([...STAGE1,...STAGE2].map(c=>c.q)).size,STAGE1.length+STAGE2.length,'Duplicate questions');
 const cats=['공사','공무','공정','원가','품질·안전','현장리스크'], fields=['토공','지반','구조','도로','교량','터널','도심지','종합'];
@@ -75,4 +77,4 @@ for(const file of [path.join(root,'README.md'),path.join(root,'AUTHORING_GUIDE.m
 }
 for(const text of ['4,500','55%','18개월'])assert(CASES[0].background.includes(text));
 for(const text of ['2배','2개월','7%','80억','1.5개월'])assert(CASES[0].issues.join(' ').includes(text));
-console.log(`PASS: ${STAGE1.length} basic / ${STAGE2.length} domain / ${CASES.length} cases / ${BOOK.length} chapters; IDs, schemas, lengths, coverage, book sync.`);
+console.log(`PASS: ${STAGE1.length} basic / ${STAGE2.length} domain / ${CASES.length} cases / ${BOOK.length} chapters / ${A01_GOLDEN.items.length} A01 documents; IDs, schemas, lengths, coverage, web sync.`);

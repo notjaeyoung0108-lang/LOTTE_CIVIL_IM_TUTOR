@@ -74,6 +74,7 @@ index.html / app.js / style.css
 
 ```sh
 node tools/build-book.js
+node tools/build-a01.js
 node tools/validate.js
 node --check app.js
 ```
@@ -83,9 +84,10 @@ node --check app.js
 ```sh
 PLAYWRIGHT_PATH=/path/to/playwright node tools/browser-qa.cjs
 PLAYWRIGHT_PATH=/path/to/playwright node tools/simulation-qa.cjs
+PLAYWRIGHT_PATH=/path/to/playwright node tools/a01-web-qa.cjs
 ```
 
-Chrome 경로가 기본 macOS 설치 위치와 다르면 CHROME_PATH로 지정한다. [QA 기록](docs/QA.md)은 웹 기능·콘텐츠 구조 검증과 기술 감수의 범위를 구별한다. 원문 변경 후 data/book.js도 함께 생성해야 배포된 화면이 갱신된다.
+Chrome 경로가 기본 macOS 설치 위치와 다르면 CHROME_PATH로 지정한다. [QA 기록](docs/QA.md)은 웹 기능·콘텐츠 구조 검증과 기술 감수의 범위를 구별한다. 기존 교재 원문 변경 후 `data/book.js`, A01 원문 변경 후 `data/a01.js`를 각각 다시 생성해야 배포된 화면이 갱신된다.
 
 ### 이미지 플래시카드
 

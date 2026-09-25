@@ -4,6 +4,7 @@
   const KEY = 'lotte_civil_im_tutor.v1';
   const DECK = [...(window.STAGE1 || []), ...(window.STAGE2 || []), ...(window.CASES || [])];
   const BOOK = window.BOOK || [];
+  const A01 = window.A01_GOLDEN || {id:'A01',title:'공정계획 수립',status:'Golden Sample',flow:'',items:[]};
   const byId = new Map(DECK.map(c => [c.id, c]));
   const categories = ['전체', '공사', '공무', '공정', '원가', '품질·안전', '현장리스크'];
   const difficulties = ['전체', '기본', '중급', '고급'];
@@ -29,6 +30,14 @@
         if (i < lines.length) i++;
         out.push(`<pre tabindex="0" aria-label="현장 도식, 가로로 스크롤"><code>${esc(code.join('\n'))}</code></pre>`); continue;
       }
+      const disclosure = /^<details><summary>(.*?)<\/summary>\s*$/.exec(line.trim());
+      if (disclosure) {
+        const body = []; i++;
+        while (i < lines.length && lines[i].trim() !== '</details>') body.push(lines[i++]);
+        if (i < lines.length) i++;
+        out.push(`<details><summary>${inline(disclosure[1])}</summary><div class="details-body">${markdown(body.join('\n'))}</div></details>`); continue;
+      }
+      if (/^---+$/.test(line.trim())) { out.push('<hr>'); i++; continue; }
       const heading = /^(#{1,4})\s+(.+)/.exec(line);
       if (heading) { const n = heading[1].length; out.push(`<h${n}>${inline(heading[2])}</h${n}>`); i++; continue; }
       if (/^>/.test(line)) { out.push(`<blockquote>${inline(line.replace(/^>\s?/, ''))}</blockquote>`); i++; continue; }
@@ -174,12 +183,25 @@
     const groups = [...new Set(BOOK.map(b=>b.growth))];
     $('main').innerHTML = `<div class="hero"><div><div class="eyebrow">FIELD SIMULATION / 성장형 현장 교재</div><h1>현장을 경험하고,<br>판단의 이유를 배우다.</h1><p class="intro">신입 안재영이 담당구간을 판단하고 후배에게 설명하기까지.<br>한 사건의 소설을 읽은 뒤, 공사·공무의 사고체계로 해부합니다.</p></div>${blueprint()}</div>
       <section class="panel"><h2>한 사건, 두 번의 읽기</h2><p>PART A. 현장소설에서 공간·사람·갈등을 경험합니다. 사건이 끝나면 PART B. 학습에서 미확인 사실, 통제 범위, 대안과 그 이유를 검토합니다.</p><p class="note">18개 사건 · 소설과 학습 별도 화면 · 숙련된 담당자의 사고방식을 훈련하며 실제 현장 경력을 대체하지 않습니다.</p></section>
+      <a class="golden-entry" href="#a01"><div><span class="golden-kicker">GOLDEN SAMPLE · A01</span><h2>공정계획 수립 실무 교과과정</h2><p>Layer 1 실무지식 → Layer 2 단위 판단 → Layer 3 통합 CASE</p><small>${A01.items.length}개 검수 완료 문서 · ${esc(A01.flow)}</small></div><span class="golden-arrow" aria-hidden="true">↗</span></a>
       ${state.book.last?`<a class="backlink" href="#book/${state.book.last}/${state.book.part}">이어서 읽기 · ${esc(BOOK.find(b=>b.id===state.book.last)?.title)} · PART ${state.book.part==='study'?'B':'A'} →</a>`:''}
       ${groups.map((group,i)=>`<section><div class="section-title"><h2>${String(i+1).padStart(2,'0')} ${esc(group)}</h2></div><div class="chapter-grid">${BOOK.filter(b=>b.growth===group).map(b=>`<a class="chapter" href="#book/${b.id}/story"><span class="num">${String(b.id).padStart(2,'0')}</span><div><strong>${esc(b.title)}</strong><small>PART A 소설 ${state.book.read.includes(b.id+'/story')?'✓':''} → PART B 학습 ${state.book.read.includes(b.id+'/study')?'✓':''}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div></section>`).join('')}
       ${BOOK.length?'':'<p class="empty">교재 데이터가 없습니다. data/book.js를 확인하세요.</p>'}
       <div class="section-title"><h2>보조 회상과 전이 연습</h2></div><div class="journey">${[1,2,3].map((s,i)=>`<a href="#s${s}"><small>REVIEW 0${s} ↗</small><strong>${['기본을 회상하다','기술을 연결하다','다른 사건에 적용하다'][i]}</strong><p>${DECK.filter(c=>c.s===s).length}${s===3?'개 실전 Case':'장 학습 카드'}</p></a>`).join('')}</div>
       <div class="reference-links"><a href="docs/00_교재사용법.md">교재 사용법</a><a href="reference/현장용어집.md">현장용어집</a><a href="reference/도면읽기.md">도면 읽기</a><a href="reference/기술검증.md">기술 검증 범위</a></div>
       <p class="footer-note">LOTTE CIVIL IM TUTOR · 개인 학습도구 · 롯데건설 공식 서비스가 아닙니다.<br>인물·현장·수량은 교육용 가상 설정입니다. 학습 기록은 이 브라우저에 저장됩니다.</p>`;
+  }
+  function a01Home() {
+    const layers = [...new Set(A01.items.map(item=>item.layer))];
+    $('main').innerHTML = `<a class="backlink" href="#book">← 교재 홈</a><div class="eyebrow">GOLDEN SAMPLE / ${esc(A01.id)}</div><div class="topline"><div><h1>${esc(A01.title)}</h1><p class="intro">${esc(A01.flow)}</p></div><span class="pill">${A01.items.length} DOCUMENTS</span></div>
+      <section class="panel"><h2>A01은 품질 기준 교재입니다</h2><p>실제 자료 확인, 관계자 질문, 수치 기반 판단, 정상·이상 구분, 실행 후 재확인을 세 단계로 학습합니다.</p><p class="note">아래 문서는 Field·Pedagogy·Quantitative Review와 최종 편집 검수를 통과한 Golden Sample입니다.</p></section>
+      ${layers.map(layer=>{const list=A01.items.filter(item=>item.layer===layer);return `<section><div class="section-title"><h2>${esc(list[0]?.layerLabel)}</h2><span>${list.length}개</span></div><div class="chapter-grid">${list.map(item=>`<a class="chapter" href="#a01/${item.id}"><span class="num">${esc(item.id)}</span><div><strong>${esc(item.title)}</strong><small>${esc(item.level)}</small></div><span class="arrow" aria-hidden="true">↗</span></a>`).join('')}</div></section>`;}).join('')}
+      ${A01.items.length?'':'<p class="empty">A01 웹 데이터가 없습니다. data/a01.js를 확인하세요.</p>'}`;
+  }
+  function a01Document(id) {
+    const item=A01.items.find(value=>value.id===id);if(!item)return a01Home();
+    const index=A01.items.indexOf(item),prev=A01.items[index-1],next=A01.items[index+1];
+    $('main').innerHTML=`<a class="backlink" href="#a01">← A01 전체 목차</a><div class="eyebrow">${esc(item.layerLabel)} / ${esc(item.level)}</div><article class="panel prose">${markdown(item.md)}</article><div class="book-nav">${prev?`<a class="button" href="#a01/${prev.id}">← 이전 문서</a>`:'<span></span>'}<a class="button subtle" href="#a01">A01 목차</a>${next?`<a class="button" href="#a01/${next.id}">다음 문서 →</a>`:'<a class="button" href="#book">교재 홈 →</a>'}</div>`;
   }
   function bookChapter(id, part = 'story') {
     const b = BOOK.find(x=>x.id===id); if (!b) return bookHome();
@@ -211,9 +233,10 @@
     const parts=(location.hash||'#book').slice(1).split('/');
     routeName=parts[0];routeArg=parts[1]||'';
     const match=/^s([123])$/.exec(routeName);stage=match?Number(match[1]):0;
-    if (!['book','home','s1','s2','s3'].includes(routeName)) { location.replace('#book');return; }
+    if (!['book','a01','home','s1','s2','s3'].includes(routeName)) { location.replace('#book');return; }
     $('main').className=stage?'study':'';
-    document.querySelectorAll('#tabs a').forEach(a=>{if(a.dataset.tab===routeName)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    const activeTab=routeName==='a01'?'book':routeName;
+    document.querySelectorAll('#tabs a').forEach(a=>{if(a.dataset.tab===activeTab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     if (stage) {
       if (routeArg) {
         const c=byId.get(routeArg);
@@ -227,10 +250,11 @@
       }
       renderStudy();
     } else if (routeName==='book') { if(routeArg)bookChapter(Number(routeArg),parts[2]);else bookHome(); }
+    else if (routeName==='a01') { if(routeArg)a01Document(routeArg);else a01Home(); }
     else home();
     badges(); window.scrollTo(0,0);
     $('main').focus({preventScroll:true});
-    document.title=`${stage?labels[stage]:routeName==='book'?'교재':'기록'} | 롯데건설 토목 IM 학습튜터`;
+    document.title=`${stage?labels[stage]:routeName==='book'?'교재':routeName==='a01'?'A01 Golden Sample':'기록'} | 롯데건설 토목 IM 학습튜터`;
   }
   function clearRouteArg() { if (routeArg) {history.replaceState(null,'',`#s${stage}`);routeArg='';} }
   function flip() { if(!stage||!sessions[stage].id)return;sessions[stage].back=!sessions[stage].back;renderStudy();window.scrollTo(0,0); }
