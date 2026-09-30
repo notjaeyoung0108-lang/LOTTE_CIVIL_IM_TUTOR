@@ -15,9 +15,9 @@ function pass(name){results.push(name);console.log('PASS',name);}
  const flip=()=>page.locator('[data-action="flip"]').click();
  await page.clock.install({time:new Date('2026-09-22T12:00:00Z')});
  await page.goto(URL);await page.locator('.chapter').first().waitFor();
- assert.equal(await page.locator('.chapter').count(),18);assert.equal(await page.locator('#tabs a').count(),5);
- await page.screenshot({path:path.join(ROOT,'docs/qa/desktop-book.png'),fullPage:true});pass('file:// direct load; 5 tabs; 18 events');
- for(const tab of ['book','s1','s2','s3','home']){await page.locator(`#tabs a[data-tab="${tab}"]`).click();assert.equal(await page.locator('#tabs a[aria-current="page"]').getAttribute('data-tab'),tab);}
+ assert.equal(await page.locator('.chapter').count(),18);assert.equal(await page.locator('#tabs a').count(),6);
+ await page.screenshot({path:path.join(ROOT,'docs/qa/desktop-book.png'),fullPage:true});pass('file:// direct load; 6 tabs; 18 events');
+ for(const tab of ['book','s1','s2','s3','memo','home']){await page.locator(`#tabs a[data-tab="${tab}"]`).click();assert.equal(await page.locator('#tabs a[aria-current="page"]').getAttribute('data-tab'),tab);}
  pass('all bottom routes and active indicators');
  await nav('#s1');const firstId=await page.locator('.card-id span').first().textContent();assert(firstId.includes('S1-001'));
  await page.locator('main').focus();await page.keyboard.press('Space');assert.equal(await page.locator('.grades').count(),1);await page.keyboard.press('1');
@@ -48,7 +48,7 @@ function pass(name){results.push(name);console.log('PASS',name);}
  await page.setViewportSize({width:390,height:844});await nav('#book');await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-book.png'),fullPage:true});
  await nav('#s1/s1-001');await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-basic.png'),fullPage:true});
  await nav('#s3/case-001');await page.locator('textarea').fill('저라면 우선 지하수 유입 위치와 유입량, 지반조건을 확인하고 위험 구간을 통제하겠습니다. 그다음 Critical Path와 여유시간을 분석해 공법 변경, 선택적 인력투입, 작업순서 조정의 공기·비용·민원 영향을 비교하겠습니다.');await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-case.png'),fullPage:true});await flip();await page.screenshot({path:path.join(ROOT,'docs/qa/mobile-answer.png'),fullPage:true});
- for(const width of [320,375,390,768,1280]){await page.setViewportSize({width,height:900});for(const hash of ['#book','#book/10','#s1','#s2','#s3/case-001','#home']){await nav(hash);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`overflow ${width} ${hash}`);if(hash.includes('case-001')){await flip();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`answer overflow ${width}`);}}}
+ for(const width of [320,375,390,768,1280]){await page.setViewportSize({width,height:900});for(const hash of ['#book','#book/10','#s1','#s2','#s3/case-001','#memo','#home']){await nav(hash);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`overflow ${width} ${hash}`);if(hash.includes('case-001')){await flip();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`answer overflow ${width}`);}}}
  pass('no document horizontal overflow at 320/375/390/768/1280px; comparison tables scroll locally');
  await nav('#home');await page.locator('[data-action="reset-ask"]').click();await page.locator('[data-action="reset-confirm"]').click();s=await state();assert.equal(s.log.length,0);assert.equal(Object.keys(s.cards).length,0);assert.equal(Object.keys(s.cases).length,0);assert.equal(s.book.read.length,0);assert.equal(s.filters.field,'전체');await page.reload();assert.equal((await state()).log.length,0);pass('full confirmed reset and persistence');
  // Waiting state and automatic return after one minute, with only one matching card unseen.

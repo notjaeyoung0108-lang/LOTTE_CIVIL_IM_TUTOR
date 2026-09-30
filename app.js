@@ -8,6 +8,10 @@
   const COURSE = window.COURSE || {title:'토목현장 실무 교재', flow:'', chapters:[]};
   const COURSE_SECTIONS = COURSE.chapters.flatMap(ch => ch.sections.map(s => ({...s, chapter:ch})));
   const byId = new Map(DECK.map(c => [c.id, c]));
+  const MEMO = window.MEMO || {title:'암기', types:{}, sections:[], cards:[]};
+  const memoById = new Map(MEMO.cards.map(c => [c.id, c]));
+  const memoTypes = Object.keys(MEMO.types);
+  const memoSections = ['전체', ...MEMO.sections.map(x => x.id)];
   const categories = ['전체', '공사', '공무', '공정', '원가', '품질·안전', '현장리스크'];
   const difficulties = ['전체', '기본', '중급', '고급'];
   const fields = ['전체', '토공', '지반', '구조', '도로', '교량', '터널', '도심지', '종합'];
@@ -66,7 +70,7 @@
     return out.join('');
   }
   const BOOK_EDITION = 'growth-2026-09';
-  const defaults = () => ({version:1, cards:{}, cases:{}, filters:{category:'전체',difficulty:'전체',field:'전체'}, log:[], book:{edition:BOOK_EDITION,last:0,part:'story',read:[]}, course:{last:'',read:[]}});
+  const defaults = () => ({version:1, cards:{}, cases:{}, filters:{category:'전체',difficulty:'전체',field:'전체'}, log:[], book:{edition:BOOK_EDITION,last:0,part:'story',read:[]}, course:{last:'',read:[]}, memo:{cards:{},types:memoTypes.slice(),section:'전체'}});
   const object = v => v && typeof v === 'object' && !Array.isArray(v);
   const number = v => Number.isFinite(v) && v >= 0;
   function warning(message) { $('storage-warning').hidden = !message; $('storage-warning').textContent = message; }
@@ -92,6 +96,14 @@
       s.course.last = COURSE_SECTIONS.some(x => x.id === raw.course.last) ? raw.course.last : '';
       s.course.read = Array.isArray(raw.course.read) ? raw.course.read.filter(id => COURSE_SECTIONS.some(x => x.id === id)) : [];
     }
+    if (object(raw.memo)) {
+      for (const [id, v] of Object.entries(object(raw.memo.cards) ? raw.memo.cards : {})) {
+        if (memoById.has(id) && object(v) && number(v.reps) && number(v.last) && number(v.due) && [1,2,3].includes(v.grade)) s.memo.cards[id] = {reps:v.reps,last:v.last,due:v.due,grade:v.grade,misses:number(v.misses)?v.misses:0};
+      }
+      const types = Array.isArray(raw.memo.types) ? raw.memo.types.filter(t => memoTypes.includes(t)) : [];
+      if (types.length) s.memo.types = types;
+      if (memoSections.includes(raw.memo.section)) s.memo.section = raw.memo.section;
+    }
     return s;
   }
   let state = defaults();
@@ -106,6 +118,7 @@
     return state.cases[id];
   }
   const sessions = {1:{id:null,back:false},2:{id:null,back:false},3:{id:null,back:false}};
+  let memoSession = {id:null,back:false};
   let stage = 0, routeArg = '', routeName = '', toastTimer;
   function toast(text) { $('toast').textContent = text; $('toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 2400); }
   function pool(s) {
@@ -120,12 +133,20 @@
     if (byId.get(id).s === 3) { const cs = caseState(id); cs.completed = true; cs.lastPracticed = now; }
     save();
   }
+  function memoPool() { return MEMO.cards.filter(c => state.memo.types.includes(c.type) && (state.memo.section === '전체' || c.section === state.memo.section)); }
+  function memoDue(now = Date.now()) { return memoPool().filter(c => state.memo.cards[c.id] && state.memo.cards[c.id].due <= now).sort((a,b) => state.memo.cards[a.id].due - state.memo.cards[b.id].due); }
+  function memoPick(now = Date.now()) { return memoDue(now)[0] || memoPool().find(c => !state.memo.cards[c.id]) || null; }
+  function memoGrade(id, value, now = Date.now()) {
+    const old = state.memo.cards[id] || {reps:0,misses:0};
+    state.memo.cards[id] = {reps:old.reps+1,last:now,due:now+intervals[value-1],grade:value,misses:old.misses+(value===1?1:0)};
+    save();
+  }
   function badges() {
     document.querySelectorAll('#tabs a').forEach(a => {
       a.querySelector('.badge')?.remove();
       const n = /^s([123])$/.exec(a.dataset.tab);
-      if (!n) return;
-      const count = due(Number(n[1])).length;
+      if (!n && a.dataset.tab !== 'memo') return;
+      const count = n ? due(Number(n[1])).length : memoDue().length;
       if (count) a.insertAdjacentHTML('beforeend', `<span class="badge" aria-label="복습 ${count}개">${count > 99 ? '99+' : count}</span>`);
     });
   }
@@ -176,6 +197,32 @@
     }
     if (stage===3) content+=directory(list);
     $('main').innerHTML = content; badges(); updateWait();
+  }
+  function memoSectionTitle(id) { return MEMO.sections.find(x => x.id === id)?.title || ''; }
+  function renderMemo() {
+    const list = memoPool();
+    let c = memoById.get(memoSession.id);
+    if (!c || !list.includes(c)) { c = memoPick(); memoSession = {id:c?.id || null, back:false}; }
+    const typeChips = `<div class="chips" role="group" aria-label="카드 종류 필터">${memoTypes.map(t => `<button class="chip ${state.memo.types.includes(t)?'active':''}" aria-pressed="${state.memo.types.includes(t)}" data-memo-type="${t}">${esc(MEMO.types[t])} · ${MEMO.cards.filter(x=>x.type===t).length}</button>`).join('')}</div>`;
+    const sectionChips = `<div class="chips" role="group" aria-label="절 필터">${memoSections.map(id => `<button class="chip ${state.memo.section===id?'active':''}" aria-pressed="${state.memo.section===id}" data-memo-section="${esc(id)}">${id==='전체'?'전체':`${esc(id)} ${esc(memoSectionTitle(id))}`}</button>`).join('')}</div>`;
+    let content = `<div class="eyebrow">MEMORIZE / CHAPTER 2</div><div class="topline"><h1>${esc(MEMO.title)}</h1><span class="pill">${MEMO.cards.length} CARDS</span></div><p class="intro">교재 챕터 2 원문 그대로 · 올바른 Flow와 Hold Point, 넘어가는 조건, 이상의 신호를 외웁니다.</p>
+      <div class="filter-label">종류</div>${typeChips}<div class="filter-label">절</div>${sectionChips}
+      <div class="study-bar"><span>복습 <strong>${memoDue().length}</strong> · 새 카드 <strong>${list.filter(x=>!state.memo.cards[x.id]).length}</strong></span><span>${list.length}개 선택됨</span></div>`;
+    if (!c) {
+      content += `<section class="panel empty"><div class="eyebrow">${list.length?'SESSION COMPLETE':'NO CARDS'}</div><h2>${list.length?'지금 할 암기를 마쳤어요.':'선택한 조건에 카드가 없어요.'}</h2><p id="memo-waitline">${list.length?'다음 복습 시간을 확인하고 있습니다.':'종류나 절을 바꿔 보세요.'}</p>${list.length?'<button class="button" data-action="memo-practice">자유 연습 한 장</button>':''}</section>`;
+    } else {
+      const back = memoSession.back, q = esc(c.q).replace(/\n/g, '<br>');
+      const meta = `<div class="meta"><span class="tag level">${esc(MEMO.types[c.type])}</span><span>${esc(c.section)} ${esc(memoSectionTitle(c.section))}</span><span>·</span><span>${(state.memo.cards[c.id]?.reps || 0)+1}회째</span></div>`;
+      content += `<article class="panel memo-card">${meta}${back ? `<h2>${q}</h2><div class="prose">${markdown(c.a)}</div><div class="related"><small>원문 맥락은 교재에서 다시 확인하세요.</small><br><a href="#course/${esc(c.section)}">${esc(c.section)} ${esc(memoSectionTitle(c.section))} ↗</a></div>` : `<div class="flash-front"><h2>${q}</h2><p>${c.type==='ab'?'무엇을 의심하고, 왜 문제인지 말해보세요.':c.type==='pre'?'넘어가기 위해 무엇이 확인되어야 하는지 말해보세요.':'순서와 되돌릴 수 없는 지점을 적어보세요.'}</p></div>`}<div class="card-id"><span>${esc(c.id.toUpperCase())}</span><span>${back?'ANSWER':'QUESTION'}</span></div></article>${back?`<button class="button subtle full" data-action="flip">← 질문 다시 보기</button>${gradeButtons()}`:`<button class="button primary full" data-action="flip">정답 보기 <span aria-hidden="true">↗</span></button><p class="shortcut"><kbd>Space</kbd> 정답 보기</p>`}`;
+    }
+    $('main').innerHTML = content; badges(); updateMemoWait();
+  }
+  function updateMemoWait() {
+    if (routeName !== 'memo' || memoSession.id || !$('memo-waitline')) return;
+    const next = memoPick();
+    if (next) { memoSession = {id:next.id,back:false}; renderMemo(); return; }
+    const upcoming = memoPool().map(c=>state.memo.cards[c.id]?.due).filter(n=>n>Date.now()).sort((a,b)=>a-b)[0];
+    if (upcoming) { const sec=Math.max(0,Math.ceil((upcoming-Date.now())/1000)); $('memo-waitline').textContent = `다음 복습까지 ${sec>=3600?`${Math.floor(sec/3600)}시간 `:''}${Math.floor(sec%3600/60)}분 ${sec%60}초 · 기한이 되면 자동으로 이어집니다.`; }
   }
   function updateWait() {
     if (!stage || sessions[stage].id || !$('waitline')) return;
@@ -260,8 +307,8 @@
     const parts=(location.hash||'#book').slice(1).split('/');
     routeName=parts[0];routeArg=parts[1]||'';
     const match=/^s([123])$/.exec(routeName);stage=match?Number(match[1]):0;
-    if (!['book','a01','course','home','s1','s2','s3'].includes(routeName)) { location.replace('#book');return; }
-    $('main').className=stage?'study':'';
+    if (!['book','a01','course','memo','home','s1','s2','s3'].includes(routeName)) { location.replace('#book');return; }
+    $('main').className=stage||routeName==='memo'?'study':'';
     const activeTab=routeName==='a01'||routeName==='course'?'book':routeName;
     document.querySelectorAll('#tabs a').forEach(a=>{if(a.dataset.tab===activeTab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     if (stage) {
@@ -279,14 +326,16 @@
     } else if (routeName==='book') { if(routeArg)bookChapter(Number(routeArg),parts[2]);else bookHome(); }
     else if (routeName==='a01') { if(routeArg)a01Document(routeArg);else a01Home(); }
     else if (routeName==='course') { if(routeArg)courseSection(routeArg);else courseHome(); }
+    else if (routeName==='memo') { const nextDue=memoDue()[0]; if (nextDue && memoSession.id !== nextDue.id) memoSession={id:nextDue.id,back:false}; renderMemo(); }
     else home();
     badges(); window.scrollTo(0,0);
     $('main').focus({preventScroll:true});
-    document.title=`${stage?labels[stage]:routeName==='book'?'교재':routeName==='a01'?'A01 Golden Sample':routeName==='course'?'토목현장 실무 교재':'기록'} | 롯데건설 토목 IM 학습튜터`;
+    document.title=`${stage?labels[stage]:routeName==='book'?'교재':routeName==='a01'?'A01 Golden Sample':routeName==='course'?'토목현장 실무 교재':routeName==='memo'?'챕터 2 암기':'기록'} | 롯데건설 토목 IM 학습튜터`;
   }
   function clearRouteArg() { if (routeArg) {history.replaceState(null,'',`#s${stage}`);routeArg='';} }
-  function flip() { if(!stage||!sessions[stage].id)return;sessions[stage].back=!sessions[stage].back;renderStudy();window.scrollTo(0,0); }
+  function flip() { if(routeName==='memo'){if(!memoSession.id)return;memoSession.back=!memoSession.back;renderMemo();window.scrollTo(0,0);return;} if(!stage||!sessions[stage].id)return;sessions[stage].back=!sessions[stage].back;renderStudy();window.scrollTo(0,0); }
   function applyGrade(value) {
+    if(routeName==='memo'){if(!memoSession.id||!memoSession.back)return;memoGrade(memoSession.id,value);memoSession={id:null,back:false};renderMemo();window.scrollTo(0,0);toast(`${ratings[value-1]} · ${['1분','20분','1일'][value-1]} 뒤 복습`);return;}
     if(!stage||!sessions[stage].id||!sessions[stage].back)return;
     grade(sessions[stage].id,value);sessions[stage]={id:null,back:false};clearRouteArg();renderStudy();window.scrollTo(0,0);toast(`${ratings[value-1]} · ${['1분','20분','1일'][value-1]} 뒤 복습`);
   }
@@ -299,18 +348,21 @@
   $('main').addEventListener('click',e=>{
     const button=e.target.closest('button');if(!button||button.disabled)return;
     if(button.dataset.filter){const name=button.dataset.filter;state.filters[name]=button.dataset.value;save();[1,2,3].forEach(s=>{sessions[s]={id:null,back:false};});clearRouteArg();renderStudy();return;}
+    if(button.dataset.memoType){const t=button.dataset.memoType,on=state.memo.types.includes(t);if(on&&state.memo.types.length===1){toast('종류를 하나 이상 선택해야 합니다.');return;}state.memo.types=on?state.memo.types.filter(x=>x!==t):memoTypes.filter(x=>x===t||state.memo.types.includes(x));save();memoSession={id:null,back:false};renderMemo();return;}
+    if(button.dataset.memoSection){if(memoSections.includes(button.dataset.memoSection)){state.memo.section=button.dataset.memoSection;save();memoSession={id:null,back:false};renderMemo();}return;}
     if(button.dataset.grade){applyGrade(Number(button.dataset.grade));return;}
     const action=button.dataset.action;
     if(action==='flip')flip();
     if(action==='write')$('case-answer')?.focus();
     if(action==='hint'){const c=byId.get(sessions[stage].id),cs=caseState(c.id);cs.hints=Math.min(c.hints.length,cs.hints+1);save();const y=scrollY;renderStudy();window.scrollTo(0,y);}
     if(action==='practice'){const c=pool(stage).sort((a,b)=>(state.cards[a.id]?.last||0)-(state.cards[b.id]?.last||0))[0];if(c){sessions[stage]={id:c.id,back:false};renderStudy();}}
+    if(action==='memo-practice'){const c=memoPool().sort((a,b)=>(state.memo.cards[a.id]?.last||0)-(state.memo.cards[b.id]?.last||0))[0];if(c){memoSession={id:c.id,back:false};renderMemo();}}
     if(action==='clear-filters'){state.filters=defaults().filters;save();clearRouteArg();renderStudy();}
     if(action==='read'){const key=Number(button.dataset.chapter)+'/'+button.dataset.part;state.book.read=[...new Set([...state.book.read,key])];save();button.textContent='✓ 읽은 영역';toast('읽음으로 표시했습니다.');}
     if(action==='course-read'){const id=button.dataset.section;if(COURSE_SECTIONS.some(x=>x.id===id)){state.course.read=[...new Set([...state.course.read,id])];save();button.textContent='✓ 읽은 절';toast('읽음으로 표시했습니다.');}}
     if(action==='reset-ask'){$('reset-confirm').hidden=false;$('reset-confirm').scrollIntoView({block:'center'});}
     if(action==='reset-cancel')$('reset-confirm').hidden=true;
-    if(action==='reset-confirm'){state=defaults();[1,2,3].forEach(s=>{sessions[s]={id:null,back:false};});save();home();badges();toast('학습 기록을 초기화했습니다.');}
+    if(action==='reset-confirm'){state=defaults();memoSession={id:null,back:false};[1,2,3].forEach(s=>{sessions[s]={id:null,back:false};});save();home();badges();toast('학습 기록을 초기화했습니다.');}
     if(action==='export'){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`lotte-im-record-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   });
   $('main').addEventListener('input',e=>{
@@ -334,6 +386,6 @@
   });
   addEventListener('hashchange',route);
   addEventListener('storage',e=>{if(e.key===KEY&&e.newValue)toast('다른 탭의 기록이 변경되었습니다. 입력을 마친 뒤 새로고침해 확인하세요.');});
-  setInterval(()=>{badges();updateWait();},1000);
+  setInterval(()=>{badges();updateWait();updateMemoWait();},1000);
   route();
 })();
